@@ -1,0 +1,54 @@
+<div class="navbar navbar-fixed-top">
+	<div class="navbar-inner">
+		<div class="container">
+			<!-- Logo -->
+			<a class="brand" href="#">
+				DailyEntity
+			</a>
+			
+			<!-- Navbar items -->
+			<ul class="nav">
+				{{>navbar_links}}
+				<li><a href="#" onMouseOver="var icon=document.getElementById('pIcon');icon.className='icon-pencil icon-white';icon.style.opacity=.5" onMouseOut="var icon=document.getElementById('pIcon');icon.className='icon-pencil';icon.style.opacity=1"><i id="pIcon" class="icon-pencil"></i></a></li>
+			</ul>
+			
+			<ul class="nav pull-right">
+				
+				<!-- Notifications -->
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+						<i class="icon-envelope icon-white"></i> <sup>{{notification_count}}</sup>
+					</a>
+					<ul class="dropdown-menu">
+						{{>notifications}}
+						<li class="divider"></li>
+						<li>
+							<div class="row-fluid">
+								<div class="span2">
+									<a href="#" class=""><i class="icon-envelope"></i></a>
+								</div>
+								<div class="span8" style="text-align:center;text-shadow:1px 1px #eee;">
+									notification center
+								</div>
+								<div class="span2">
+									<a href="#" class="pull-right"><i class="icon-trash"></i></a>
+								</div>
+							</div>
+						</li>
+					</ul>
+				</li>
+				
+				<!-- Account menu -->
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown">
+						<i class="icon-user icon-white"></i> <span id="account_username">{{user_name}}</span> <b class="caret"></b>
+					</a>
+					<ul id="account_menu" class="dropdown-menu">
+						{{>account_menu}}
+					</ul>
+				</li>
+			</ul>
+						
+		</div>
+	</div>
+</div>

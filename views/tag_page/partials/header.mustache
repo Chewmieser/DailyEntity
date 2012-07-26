@@ -1,0 +1,188 @@
+<!-- Load bootstrap CSS -->
+<link href="../includes/bootstrap/css/bootstrap.css" rel="stylesheet">
+<link href="../includes/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+
+<script type="text/javascript" src="/nowjs/now.js"></script>
+
+<!-- Minor modifications -->
+<style type="text/css">
+	body{
+		margin-top:40px;
+		background-color:lightgrey;
+	}
+</style>
+
+<!-- Mostly editor-related tidbits -->
+<script type="text/javascript">
+
+/*if (window.webkitNotifications.checkPermission()!=0){
+	window.webkitNotifications.requestPermission();
+}*/
+
+function modifyLogin(){
+	$('#logincontrols').append("<li><input id='signupEmail' type='text' placeholder='email'></li>");
+	$('#loginSubmit').html("signup");
+	$('#loginSubmit').attr('onClick','signupUser();');
+	$('#signupButton').html("cancel");
+}
+
+function signupUser(){
+	now.signup($('#loginUsername').val(),$('#loginPass').val(),$('#signupEmail').val());
+}
+
+function loginUser(){
+	// Disable login elements
+	$('#loginUsername').attr('disabled','');
+	$('#loginPass').attr('disabled','');
+	$('#loginSubmit').addClass('active');
+	
+	// Send login command
+	now.login($('#loginUsername').val(),$('#loginPass').val());
+}
+
+now.newPost=function(post){
+	$(post).hide().prependTo('#postContainer').slideDown("slow");
+	//window.webkitNotifications.createNotification(null,'New Post','This should be the post body');
+}
+
+now.loginResponse=function(l,u){
+	//window.webkitNotifications.requestPermission(function(){});
+	//window.webkitNotifications.createNotification(null,'logged in','Kk logged in');
+	
+	if (!l){
+		console.log(":(");
+		
+		$('#loginUsername').removeAttr('disabled');
+		$('#loginPass').removeAttr('disabled');
+		$('#loginSubmit').removeClass('active');
+		
+		$('#logincontrols').addClass('error');
+	}else{
+		console.log(":)");
+		
+		$('#account_username').html(u.name);
+		$('#account_menu').html("<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#'>Sign out</a></li>");
+	}
+}
+
+function doPost(){
+	// Get post body
+	var $editor=$("#editor").contents();
+	var $body=$editor.find("body");
+	var bc=$body.html();
+	
+	// Set made-up tags
+	var tags=["atgar"];
+	
+	// Send the post their way
+	now.postMessage(bc,tags);
+	
+	$body.html('');
+}
+
+// Hashtag parsing
+String.prototype.parseHashtag = function() {
+	return this.replace(/[#]+[A-Za-z0-9-_]+/g, function(t) {
+		return "<a href='#' class='label'><i class='icon-tag icon-white'></i> "+t.replace("#","")+"</a>";
+	});
+};
+
+// Mention parsing
+String.prototype.parseMention = function() {
+	return this.replace(/[@]+[A-Za-z0-9-_]+/g, function(t) {
+		return "<a href='#' class='label label-info'><i class='icon-user icon-white'></i> "+t.replace("@","")+"</a>";
+	});
+};
+
+String.prototype.parseImage = function(){
+	return this.replace(/(https?:\/\/.*\.(?:png|jpg|gif))/i, function(t){
+		$('#attach').append("<div class='btn active'><img src='"+t+"' style='width:15px;height:15px;' /></div>")
+		return "<a href='#' class='label label-success'><i class='icon-picture icon-white'></i> Attachment</a>";
+	});
+}
+
+function doBold(button){
+	if ($(button).hasClass('active')){
+		editor.document.execCommand("bold",false,'');
+	}else{
+		editor.document.execCommand("bold",false,'');
+	}
+	
+	$(button).toggleClass('active');
+	//$('#comments1').toggle(500);
+}
+
+// Initialize the editor
+function doStuff(){
+	//jQuery(function($) {
+		var $editor=$("#editor").contents();
+		var $head=$editor.find("head");
+		var $body=$editor.find("body");
+		$body.css("background-color","#f5f5f5");
+		$head.append('<link href="../includes/bootstrap/css/bootstrap.css" rel="stylesheet">'); // Load bootstrap stylesheet
+//	});
+	
+	// Start design mode
+	editor.document.designMode='On';
+	monitor(); // Attach the spacebar hook
+}
+
+// Processes editor for hashtags
+function tagify(){
+	jQuery(function($) {
+		var $editor=$("#editor").contents();
+		var $body=$editor.find("body");
+		var bc=$body.html();
+		bc=bc.parseHashtag(); // Find tags
+		bc=bc.parseMention(); // Find mentions
+		bc=bc.parseImage();
+
+		// Insert tags
+		insertAtCursor("editor",'<img src="" id="caret" />', 0);
+		$body.html(bc);
+		resetCaret("editor");
+	});
+}
+
+// Monitors the editor for a spacebar
+function monitor(){
+	var f = document.getElementById('editor');
+	var fwin = f.contentWindow || f.contentDocument;
+
+	var evt_key = function (e) {
+		e = e || fwin.event;
+		if (e.which==32 || e.which==46){ tagify(); }
+	};
+
+	if (fwin.document.attachEvent) { fwin.document.attachEvent('onkeypress', evt_key); }
+	else if (fwin.document.addEventListener) { fwin.document.addEventListener('keypress', evt_key, false); }
+}
+
+// Insert a "tag" before adding a hashtag
+function insertAtCursor(iframename, text, replaceContents) {
+      if(replaceContents==null){replaceContents=false;}
+      if(!replaceContents){//collapse selection:
+         var sel=document.getElementById(iframename).contentWindow.getSelection()
+         sel.collapseToStart()
+      }
+      document.getElementById(iframename).contentWindow.document.execCommand('insertHTML', false, text);
+};
+
+// Remove the tag after adding the hashtag and fix our insertion point
+function resetCaret(iframename){
+	var iframe=document.getElementById(iframename).contentWindow
+	var referenceNode = iframe.document.getElementById("caret");
+	if (referenceNode){
+		var sel=document.getElementById(iframename).contentWindow.getSelection()
+
+		if(sel.focusNode){ // FireFox
+			var range=sel.getRangeAt(0);
+		}else{ // Chrome
+			var range=iframe.document.createRange()
+		}
+		
+		range.selectNode(referenceNode);
+		range.deleteContents();
+	}
+}
+</script>
