@@ -128,8 +128,10 @@ now.commentResponse=function(id,post_id){
 	}
 }
 
-now.newPost=function(post){
-	$(post).hide().prependTo('#postContainer').slideDown("slow");
+now.newPost=function(post,tags){
+	if (tags.indexOf(tagPage)!=-1){
+		$(post).hide().prependTo('#postContainer').slideDown("slow");
+	}
 	//window.webkitNotifications.createNotification(null,'New Post','This should be the post body');
 }
 

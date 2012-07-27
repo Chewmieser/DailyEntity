@@ -429,7 +429,7 @@ everyone.now.postMessage=function(content,tags){
 	this.now.postResponse(1);
 	postContent(post.userId,content,tags,function(postId){
 		this.postId=postId;
-		everyone.now.newPost(mustache.to_html(this.template,this.view,this.partials));
+		everyone.now.newPost(mustache.to_html(this.template,this.view,this.partials),this.tags);
 	}.bind(post));
 }
 
