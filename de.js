@@ -35,7 +35,7 @@ var passHash={
 	after: "12deFunlol1z"
 }
 
-var everyone=nowjs.initialize(app);
+var everyone=nowjs.initialize(app,{socketio: {"transports": ["xhr-polling"], "polling duration": 10}});
 
 /*var connection=mysql.createConnection({
 	host:'0.0.0.0',
