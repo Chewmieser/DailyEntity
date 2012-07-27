@@ -13,6 +13,7 @@ var mustache=require('mustache'); // Template
 var fs=require("fs");
 var path=require("path");
 var nowjs=require("now");
+var md5=require("MD5");
 
 // Create server, connect to MySQL
 var app=express.createServer();
@@ -348,7 +349,7 @@ app.get('/',function(req,res){
 
 everyone.now.login=function(username,password){
 	username=username.toLowerCase();
-	client.query("SELECT * FROM users WHERE name=$1 AND password=$2",[username,password],function(err,result){
+	client.query("SELECT * FROM users WHERE name=$1 AND password=$2",[username,md5(passHash.before+password+passHash.after)],function(err,result){
 		var rows=result.rows;
 		
 		if (Object.keys(rows).length==0){
@@ -376,7 +377,7 @@ everyone.now.signup=function(username,password,email){
 		var rows=result.rows;
 		if (Object.keys(rows).length==0){
 			// They don't exist :D
-			client.query("INSERT INTO users (name, avatar_url, password, email) VALUES($1,'http://i.imgur.com/2KeOZ.png',$2,$3) RETURNING user_id",[this.username,this.password,this.email],function(err,result){
+			client.query("INSERT INTO users (name, avatar_url, password, email) VALUES($1,'http://i.imgur.com/2KeOZ.png',$2,$3) RETURNING user_id",[this.username,md5(passHash.before+this.password+passHash.after),this.email],function(err,result){
 				this.user.session.userId=result.rows[0].user_id;
 				this.user.session.username=this.username;
 				this.user.session.avatar_url='http://i.imgur.com/2KeOZ.png';

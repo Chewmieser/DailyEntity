@@ -102,6 +102,17 @@
         }
       }
     },
+    "MD5": {
+	  "version": "1.0.0",
+	  "dependencies": {
+		"charenc": {
+		  "version": "0.0.1"
+		},
+		"crypt": {
+		  "version": "0.0.1"
+		}
+	  }
+	},
     "connect-heroku-redis": {
       "version": "0.1.5",
       "dependencies": {
