@@ -278,14 +278,14 @@ function sendTagPage(clientId){
 
 function postContent(user_id,content,tags,callback){
 	this.tags=tags;
-	client.query("INSERT INTO posts VALUES(nextval('posts_id_seq'),$1,$2,now()) RETURNING post_id",[content,user_id],function(err,result){
+	client.query("INSERT INTO posts ('post','user_id','timestamp') VALUES($1,$2,now()) RETURNING post_id",[content,user_id],function(err,result){
 		console.log(err);
 		this.postId=result.rows[0].post_id;
 		this.tagTotal=tags.length;
 		
 		resolveTags(tags,function(t){
 			for (i in t){
-				client.query("INSERT INTO post_tags VALUES(nextval('post_tags_id_seq'),$1,$2)",[this.postId,t[i]],function(err,result){
+				client.query("INSERT INTO post_tags ('post_id','tag_id') VALUES($1,$2)",[this.postId,t[i]],function(err,result){
 					this.tagTotal--;
 
 					if (this.tagTotal==0){
