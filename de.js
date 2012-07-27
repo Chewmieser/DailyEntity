@@ -28,7 +28,7 @@ app.use(express.session({secret: "de123dezxc", store: sessionStore}));
 var HerokuRedisStore=require('connect-heroku-redis')(express);
 app.use(express.session({secret: "de123dezxc", store: new HerokuRedisStore}));
 
-app.listen(3000);
+app.listen(process.env.PORT || 5000);
 
 var passHash={
 	before: "de{crazy}",
