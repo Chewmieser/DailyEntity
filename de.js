@@ -324,6 +324,7 @@ function resolveTags(tags,callback){
 	
 	for (i in tags){
 		client.query("SELECT findTag($1)",[tags[i]],function(err,result){
+			if (err){ console.log(err); }
 			this.resolved.push(result.rows[0].findtag);
 			this.totalTags--;
 
