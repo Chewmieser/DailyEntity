@@ -26,6 +26,7 @@ var commentEditSource='<div id="ceditContainer" class="row" style="margin-left:0
 
 function logout(){
 	now.logout();
+	$('#account_username').html("sign in");
 	$('#account_menu').html("<form style='padding-left:5px;padding-right:5px;'><div class='control-group' id='logincontrols'><li><input id='loginUsername' type='text' placeholder='username'></li><li><input id='loginPass' type='password' placeholder='password'></li></div><li><button type='button' id='signupButton' onClick='modifyLogin()' class='btn'>sign up</button><button type='button' id='loginSubmit' onClick='loginUser()' class='btn btn-primary pull-right'>login</button></form></li>");
 }
 
