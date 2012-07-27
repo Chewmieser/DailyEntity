@@ -219,7 +219,7 @@ function sendTagPage(clientId){
 	}
 	
 	if (global.client[clientId].request.session.userId!=undefined){
-		p.account_menu="<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#'>Sign out</a></li>";
+		p.account_menu="<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout();'>Sign out</a></li>";
 		v.user_name=global.client[clientId].request.session.username;
 	}
 	
