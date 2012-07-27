@@ -1,0 +1,1 @@
+{"database_url":"postgres://Steven@localhost/dailyentity","session_uri":"/sessions/1121186612","completed_tables":[],"table_filter":null,"klass":"Taps::Push","local_tables_info":{"notifications":0,"post_tags":88,"comments":21,"posts":55,"tags":39,"user_permissions":0,"users":6},"remote_url":"http://heroku:osui59a24am79x@taps3.heroku.com","stream_state":{}}
