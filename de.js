@@ -337,9 +337,14 @@ function resolveTags(tags,callback){
 // Opening a tag page
 app.get('/tag/*',function(req,res){
 	console.log("asking for functions...");
-	client.query("SELECT  proname FROM pg_catalog.pg_namespace n JOIN pg_catalog.pg_proc p ON pronamespace = n.oid WHERE nspname = 'public'",function(err,result){
+	client.query(fs.readFileSync("./createFindTag.sql","utf-8"),function(err,result){
 		if (err){console.log(err);}
 		console.log(result);
+		
+		client.query(fs.readFileSync("./createModifyPostTags.sql","utf-8"),function(err,result){
+			if (err){console.log(err);}
+			console.log(result);
+		});
 	});
 	
 	var clientId=createClient(req,res);
