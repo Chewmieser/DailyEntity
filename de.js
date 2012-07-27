@@ -46,7 +46,7 @@ connection.query('USE dailyentity');*/
 
 
 // Use new db
-var client=new pg.Client("tcp://Steven@localhost/dailyentity");
+var client=new pg.Client(process.env.DATABASE_URL);
 client.connect();
 /*client.query("SELECT * FROM posts LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id=1",function(err,result){
 	console.log(result);
