@@ -102,7 +102,7 @@ function loadTagPage(clientId){
 		var rows=result.rows;
 		if (Object.keys(rows).length==0){
 			// Send the tag page
-			connection.query("INSERT INTO tags VALUES(nextval('tags_id_seq'),$1,'')",[tag],function(err,result){
+			connection.query("INSERT INTO tags (tag_name, tag_description) VALUES($1,'')",[tag],function(err,result){
 				debug(DEBUG_INFO,"Tag '"+tag+"' created");
 				sendTagPage(this.clientId);
 			}.bind(this)); // Pass context of 'this' into function
@@ -351,7 +351,7 @@ everyone.now.login=function(username,password){
 everyone.now.signup=function(username,password,email){
 	this.username=username.toLowerCase();
 	this.email=email.toLowerCase();
-	client.query("INSERT INTO users VALUES(nextval('users_id_seq'),$1,'http://i.imgur.com/2KeOZ.png',$2,$3) RETURNING user_id",[username,password,email],function(err,result){
+	client.query("INSERT INTO users (name, avatar_url, password, email) VALUES($1,'http://i.imgur.com/2KeOZ.png',$2,$3) RETURNING user_id",[username,password,email],function(err,result){
 		this.user.session.userId=result.rows[0].user_id;
 		this.user.session.username=this.username;
 		this.user.session.avatar_url='http://i.imgur.com/2KeOZ.png';
