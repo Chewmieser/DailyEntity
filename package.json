@@ -1,0 +1,15 @@
+{
+	"name": "dailyentity-server",
+	"version": "0.0.1",
+	"dependencies": {
+		"express": "2.5.x",
+		"mustache": "0.4.x",
+		"now": "0.8.x",
+		"pg": "0.8.x",
+		"connect-heroku-redis": "0.1.x"
+	},
+	"engines": {
+		"node": "0.8.x",
+		"npm": "1.1.x"
+	}
+}

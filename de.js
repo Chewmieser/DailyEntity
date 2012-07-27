@@ -8,10 +8,7 @@ var codeName="Chocolate Chip Cheesecake";
 
 // Load libs
 var express=require("express"); // Routing
-var mysql=require("mysql"); // DB
-
 var pg=require('pg'); // New DB
-
 var mustache=require('mustache'); // Template
 var fs=require("fs");
 var path=require("path");
@@ -22,9 +19,14 @@ var app=express.createServer();
 app.use(express.logger('dev'));
 app.use(express.cookieParser());
 
+/*
 var MemoryStore=express.session.MemoryStore;
 var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
 app.use(express.session({secret: "de123dezxc", store: sessionStore}));
+*/
+
+var HerokuRedisStore=require('connect-heroku-redis')(express);
+app.use(express.session({secret: "de123dezxc", store: new HerokuRedisStore}));
 
 app.listen(3000);
 
@@ -35,12 +37,21 @@ var passHash={
 
 var everyone=nowjs.initialize(app);
 
-var connection=mysql.createConnection({
+/*var connection=mysql.createConnection({
 	host:'0.0.0.0',
 	user:'root'
 });
 connection.connect();
-connection.query('USE dailyentity');
+connection.query('USE dailyentity');*/
+
+
+// Use new db
+var client=new pg.Client("tcp://Steven@localhost/dailyentity");
+client.connect();
+/*client.query("SELECT * FROM posts LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id=1",function(err,result){
+	console.log(result);
+});*/
+
 
 // Configuration
 const DEBUG_INFO=0, DEBUG_WARN=1, DEBUG_ERROR=2;
@@ -86,11 +97,12 @@ function loadTagPage(clientId){
 	debug(DEBUG_INFO,"Client '"+clientId+"' requesting tag page '"+tag+"'");
 	
 	// Find the tag ID
-	connection.query("SELECT id,tag_description FROM tags WHERE tag_name=?",tag,function(err,rows,fields){
+	client.query("SELECT tag_id,tag_description FROM tags WHERE tag_name=$1",[tag],function(err,result){
 		// If there is no tag ID, create the tag
+		var rows=result.rows;
 		if (Object.keys(rows).length==0){
 			// Send the tag page
-			connection.query("INSERT INTO tags VALUES('',?,'')",tag,function(err,result){
+			connection.query("INSERT INTO tags VALUES(nextval('tags_id_seq'),$1,'')",[tag],function(err,result){
 				debug(DEBUG_INFO,"Tag '"+tag+"' created");
 				sendTagPage(this.clientId);
 			}.bind(this)); // Pass context of 'this' into function
@@ -98,22 +110,24 @@ function loadTagPage(clientId){
 			// Grab the tag
 			var tagId=rows[0].id;
 			
-			global.client[this.clientId].page_data.tag_data.id=rows[0].id;
+			global.client[this.clientId].page_data.tag_data.id=rows[0].tag_id;
 			global.client[this.clientId].page_data.tag_data.description=rows[0].tag_description;
 
 			// Find relevant post IDs
-			connection.query("SELECT post_id FROM post_tags WHERE tag_id="+rows[0].id+" ORDER BY id DESC",function(err,rows,fields){
+			client.query("SELECT post_id FROM post_tags WHERE tag_id="+rows[0].tag_id+" ORDER BY post_id DESC",function(err,result){
+				var rows=result.rows;
 				// If we have posts available, grab them
 				if (Object.keys(rows).length>0){
 					for (var r in Object.keys(rows)){
 						global.client[this.clientId].page_data.total_posts++;
-						connection.query({sql: "SELECT * FROM posts LEFT JOIN users ON posts.user_id=users.id WHERE posts.id="+rows[r].post_id, nestTables: true},function(err,rows,fields){
+						client.query("SELECT * FROM posts LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id="+rows[r].post_id,function(err,result){
+							var rows=result.rows;
 							var pid=global.client[this.clientId].page_data.posts.push({
-								post: rows[0].posts.post,
-								user_id: rows[0].posts.user_id,
-								post_id: rows[0].posts.id,
-								user_name: rows[0].users.name,
-								avatar_url: rows[0].users.avatar_url
+								post: rows[0].post,
+								user_id: rows[0].user_id,
+								post_id: rows[0].post_id,
+								user_name: rows[0].name,
+								avatar_url: rows[0].avatar_url
 							})-1;
 							
 							var tmp={
@@ -121,14 +135,23 @@ function loadTagPage(clientId){
 								pid: pid
 							}
 							
-							connection.query({sql: "SELECT * FROM comments LEFT JOIN users ON comments.user_id=users.id WHERE post_id="+rows[0].posts.id, nestTables: true},function(err,rows,fields){
+							client.query("SELECT * FROM comments LEFT JOIN users ON comments.user_id=users.user_id WHERE post_id="+rows[0].post_id,function(err,result){
+								var rows=result.rows;
 								var tmp=[];
 								
 								for (i in rows){
-									var curr=tmp.push(rows[i].comments)-1;
-									tmp[curr].user_name=rows[i].users.name;
-									tmp[curr].user_id=rows[i].users.id;
-									tmp[curr].avatar_url=rows[i].users.avatar_url;
+									var tmpCurr={
+										id: rows[i].comment_id,
+										comment: rows[i].comment,
+										user_id: rows[i].user_id,
+										post_id: rows[i].post_id,
+										timestamp: rows[i].timestamp
+									}
+									
+									var curr=tmp.push(tmpCurr)-1;
+									tmp[curr].user_name=rows[i].name;
+									tmp[curr].user_id=rows[i].user_id;
+									tmp[curr].avatar_url=rows[i].avatar_url;
 								}
 								global.client[this.clientId].page_data.posts[this.pid].comments=tmp;
 								
@@ -192,7 +215,7 @@ function sendTagPage(clientId){
 	var p={
 		navbar_links: "",
 		notifications: "",
-		account_menu: "<form style='padding-left:5px;padding-right:5px;'><div class='control-group' id='logincontrols'><li><input id='loginUsername' type='text' placeholder='username'></li><li><input id='loginPass' type='password' placeholder='password'></li></div><li><button id='signupButton' onClick='modifyLogin()' class='btn'>sign up</button><button id='loginSubmit' onClick='loginUser()' class='btn btn-primary pull-right'>login</button></li></form>"
+		account_menu: "<form style='padding-left:5px;padding-right:5px;' action='#'><div class='control-group' id='logincontrols'><li><input id='loginUsername' type='text' placeholder='username'></li><li><input id='loginPass' type='password' placeholder='password'></li></div><li><button id='signupButton' onClick='modifyLogin()' class='btn'>sign up</button><button id='loginSubmit' onClick='loginUser()' class='btn btn-primary pull-right'>login</button></li></form>"
 	}
 	
 	if (global.client[clientId].request.session.userId!=undefined){
@@ -255,13 +278,14 @@ function sendTagPage(clientId){
 
 function postContent(user_id,content,tags,callback){
 	this.tags=tags;
-	connection.query("INSERT INTO posts VALUES('',?,?,now())",[content,user_id],function(err,result){
-		this.postId=result.insertId;
+	client.query("INSERT INTO posts VALUES(nextval('posts_id_seq'),$1,$2,now()) RETURNING post_id",[content,user_id],function(err,result){
+		console.log(err);
+		this.postId=result.rows[0].post_id;
 		this.tagTotal=tags.length;
 		
 		resolveTags(tags,function(t){
 			for (i in t){
-				connection.query("INSERT INTO post_tags VALUES('',?,?)",[this.postId,t[i]],function(err,rows,fields){
+				client.query("INSERT INTO post_tags VALUES(nextval('post_tags_id_seq'),$1,$2)",[this.postId,t[i]],function(err,result){
 					this.tagTotal--;
 
 					if (this.tagTotal==0){
@@ -279,8 +303,9 @@ function resolveTags(tags,callback){
 	this.totalTags=tags.length;
 	
 	for (i in tags){
-		connection.query("SELECT id FROM tags WHERE tag_name=?",tags[i],function(err,rows,fields){
-			this.resolved.push(rows[0].id);
+		client.query("SELECT tag_id FROM tags WHERE tag_name=$1",[tags[i]],function(err,result){
+			var rows=result.rows;
+			this.resolved.push(rows[0].tag_id);
 			this.totalTags--;
 			
 			if (this.totalTags==0){
@@ -304,7 +329,8 @@ app.get('/test',function(req,res){
 
 everyone.now.login=function(username,password){
 	username=username.toLowerCase();
-	connection.query("SELECT * FROM users WHERE name=? AND password=?",[username,password],function(err,rows,fields){
+	client.query("SELECT * FROM users WHERE name=$1 AND password=$2",[username,password],function(err,result){
+		var rows=result.rows;
 		
 		if (Object.keys(rows).length==0){
 			this.now.loginResponse(false,{});
@@ -312,6 +338,7 @@ everyone.now.login=function(username,password){
 			
 			delete rows[0].password;
 			
+			rows[0].id=rows[0].user_id;
 			this.user.session.userId=rows[0].id;
 			this.user.session.username=rows[0].name;
 			this.user.session.avatar_url=rows[0].avatar_url;
@@ -324,13 +351,13 @@ everyone.now.login=function(username,password){
 everyone.now.signup=function(username,password,email){
 	this.username=username.toLowerCase();
 	this.email=email.toLowerCase();
-	connection.query("INSERT INTO users VALUES('',?,'http://i.imgur.com/2KeOZ.png',?,?)",[username,password,email],function(err,result){
-		this.user.session.userId=result.insertId;
+	client.query("INSERT INTO users VALUES(nextval('users_id_seq'),$1,'http://i.imgur.com/2KeOZ.png',$2,$3) RETURNING user_id",[username,password,email],function(err,result){
+		this.user.session.userId=result.rows[0].user_id;
 		this.user.session.username=this.username;
 		this.user.session.avatar_url='http://i.imgur.com/2KeOZ.png';
 		
 		var userObject={
-			id: result.insertId,
+			id: result.rows[0].user_id,
 			name: this.username,
 			avatar_url: 'http://i.imgur.com/2KeOZ.png',
 			email: this.email
