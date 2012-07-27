@@ -15,15 +15,70 @@
 <!-- Mostly editor-related tidbits -->
 <script type="text/javascript">
 
+var tagPage="{{tag_name}}";
+var postTags=[tagPage];
+var commentEditSource='<div id="ceditContainer" class="row" style="margin-left:0px;"><div class="span1"></div><div class="span11"><iframe id="commentEditor" class="well" style="width:99%;height:100px;padding:5px;"></iframe><div style="margin-top:-20px;"><div class="btn-toolbar" style="display:inline;"><div class="btn-group" id="attach"><button class="btn"><i class="icon-upload"></i></button><button class="btn"><i class="icon-picture"></i></button></div><div class="btn-group"><button class="btn" onClick="doBold(this);"><i class="icon-bold"></i></button><button class="btn"><i class="icon-italic"></i></button></div></div><button id="sendCommentButton" class="btn btn-success btn-large pull-right" type="submit"><i class="icon-comment icon-white"></i> Comment</button></div><br><br></div></div>';
+
+
 /*if (window.webkitNotifications.checkPermission()!=0){
 	window.webkitNotifications.requestPermission();
 }*/
 
+function doComment(post_id){
+	console.log(post_id);
+	this.post_id=post_id;
+	$('#reply-'+post_id+'-icon').toggleClass('icon-share-alt').toggleClass('icon-remove').attr('onClick','removeCommentBox('+post_id+')');
+	$(commentEditSource).hide().prependTo('#comments-'+post_id).slideDown("slow",function(){
+		var $editor=$("#commentEditor").contents();
+		var $head=$editor.find("head");
+		var $body=$editor.find("body");
+		$body.css("background-color","#f5f5f5");
+		$head.append('<link href="../includes/bootstrap/css/bootstrap.css" rel="stylesheet">');
+		commentEditor.document.designMode='On';
+		
+		$("#sendCommentButton").attr("onClick","sendComment("+this.post_id+")");
+		
+		monitor('commentEditor');
+	}.bind(this));
+}
+
+function sendComment(post_id){
+	// Get comment body
+	var $editor=$("#commentEditor").contents();
+	var $body=$editor.find("body");
+	var bc=$body.html();
+	
+	// Send the post their way
+	$('#sendCommentButton').addClass('active');
+	now.postComment(post_id,bc,postTags);
+}
+
+function removeCommentBox(post_id){
+	$('#comments-'+post_id+' #ceditContainer').slideUp("slow", function(){$(this).remove()});
+	$('#reply-'+post_id+'-icon').toggleClass('icon-share-alt').toggleClass('icon-remove').attr('onClick','doComment('+post_id+')');
+	postTags=[tagPage];
+}
+
+function addTag(tagName){
+	if (postTags.indexOf(tagName)==-1){
+		postTags.push(tagName)
+	}
+}
+
 function modifyLogin(){
-	$('#logincontrols').append("<li><input id='signupEmail' type='text' placeholder='email'></li>");
+	$('#logincontrols').append("<li id='signupField'><input id='signupEmail' type='text' placeholder='email'></li>");
 	$('#loginSubmit').html("signup");
 	$('#loginSubmit').attr('onClick','signupUser();');
 	$('#signupButton').html("cancel");
+	$('#signupButton').attr('onClick','reModifyLogin();');
+}
+
+function reModifyLogin(){
+	$('#signupField').remove();
+	$('#loginSubmit').html("login");
+	$('#loginSubmit').attr('onClick','loginUser();');
+	$('#signupButton').html("signup");
+	$('#signupButton').attr('onClick','modifyLogin();');
 }
 
 function signupUser(){
@@ -40,9 +95,40 @@ function loginUser(){
 	now.login($('#loginUsername').val(),$('#loginPass').val());
 }
 
+now.signupError=function(id){
+	$('#logincontrols').addClass('error');
+}
+
+now.postResponse=function(id){
+	if (id==0){
+		$('#accountMenuDrop').addClass('open');
+	}else{
+		var $editor=$("#editor").contents();
+		var $body=$editor.find("body");
+		
+		$body.html('');
+		postTags=[tagPage];
+	}
+	
+	$('#submitPostBt').removeClass('active');
+}
+
+now.commentResponse=function(id,post_id){
+	if (id==0){
+		$('#accountMenuDrop').addClass('open');
+	}else{
+		postTags=[tagPage];
+		removeCommentBox(post_id);
+	}
+}
+
 now.newPost=function(post){
 	$(post).hide().prependTo('#postContainer').slideDown("slow");
 	//window.webkitNotifications.createNotification(null,'New Post','This should be the post body');
+}
+
+now.newComment=function(post_id,comment){
+	$(comment).hide().prependTo('#comments-'+post_id).slideDown("slow");
 }
 
 now.loginResponse=function(l,u){
@@ -50,7 +136,6 @@ now.loginResponse=function(l,u){
 	//window.webkitNotifications.createNotification(null,'logged in','Kk logged in');
 	
 	if (!l){
-		console.log(":(");
 		
 		$('#loginUsername').removeAttr('disabled');
 		$('#loginPass').removeAttr('disabled');
@@ -58,8 +143,7 @@ now.loginResponse=function(l,u){
 		
 		$('#logincontrols').addClass('error');
 	}else{
-		console.log(":)");
-		
+		$('#accountMenuDrop').removeClass('open');
 		$('#account_username').html(u.name);
 		$('#account_menu').html("<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#'>Sign out</a></li>");
 	}
@@ -71,26 +155,23 @@ function doPost(){
 	var $body=$editor.find("body");
 	var bc=$body.html();
 	
-	// Set made-up tags
-	var tags=["atgar"];
-	
 	// Send the post their way
-	now.postMessage(bc,tags);
-	
-	$body.html('');
+	$('#submitPostBt').addClass('active');
+	now.postMessage(bc,postTags);
 }
 
 // Hashtag parsing
 String.prototype.parseHashtag = function() {
 	return this.replace(/[#]+[A-Za-z0-9-_]+/g, function(t) {
-		return "<a href='#' class='label'><i class='icon-tag icon-white'></i> "+t.replace("#","")+"</a>";
+		addTag(t.replace("#",""));
+		return "<a href='/tag/"+t.replace("#","")+"' class='label'><i class='icon-tag icon-white'></i> "+t.replace("#","")+"</a>";
 	});
 };
 
 // Mention parsing
 String.prototype.parseMention = function() {
 	return this.replace(/[@]+[A-Za-z0-9-_]+/g, function(t) {
-		return "<a href='#' class='label label-info'><i class='icon-user icon-white'></i> "+t.replace("@","")+"</a>";
+		return "<a href='/user/"+t.replace("@","")+"' class='label label-info'><i class='icon-user icon-white'></i> "+t.replace("@","")+"</a>";
 	});
 };
 
@@ -124,13 +205,12 @@ function doStuff(){
 	
 	// Start design mode
 	editor.document.designMode='On';
-	monitor(); // Attach the spacebar hook
+	monitor('editor'); // Attach the spacebar hook
 }
 
 // Processes editor for hashtags
-function tagify(){
-	jQuery(function($) {
-		var $editor=$("#editor").contents();
+function tagify(editor){
+		var $editor=$('#'+editor).contents();
 		var $body=$editor.find("body");
 		var bc=$body.html();
 		bc=bc.parseHashtag(); // Find tags
@@ -138,21 +218,21 @@ function tagify(){
 		bc=bc.parseImage();
 
 		// Insert tags
-		insertAtCursor("editor",'<img src="" id="caret" />', 0);
+		insertAtCursor(editor,'<img src="" id="caret" />', 0);
 		$body.html(bc);
-		resetCaret("editor");
-	});
+		resetCaret(editor);
 }
 
 // Monitors the editor for a spacebar
-function monitor(){
-	var f = document.getElementById('editor');
+function monitor(editor){
+	this.editor=editor;
+	var f = document.getElementById(editor);
 	var fwin = f.contentWindow || f.contentDocument;
 
 	var evt_key = function (e) {
 		e = e || fwin.event;
-		if (e.which==32 || e.which==46){ tagify(); }
-	};
+		if (e.which==32 || e.which==46){ tagify(this.editor); }
+	}.bind(this);
 
 	if (fwin.document.attachEvent) { fwin.document.attachEvent('onkeypress', evt_key); }
 	else if (fwin.document.addEventListener) { fwin.document.addEventListener('keypress', evt_key, false); }

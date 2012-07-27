@@ -19,16 +19,16 @@ var app=express.createServer();
 app.use(express.logger('dev'));
 app.use(express.cookieParser());
 
-/*
-var MemoryStore=express.session.MemoryStore;
+// Development session store !!!----!!!
+/*var MemoryStore=express.session.MemoryStore;
 var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
-app.use(express.session({secret: "de123dezxc", store: sessionStore}));
-*/
+app.use(express.session({secret: "de123dezxc", store: sessionStore}));*/
 
+// Production session store !!!----!!!
 var HerokuRedisStore=require('connect-heroku-redis')(express);
 app.use(express.session({secret: "de123dezxc", store: new HerokuRedisStore}));
 
-app.listen(process.env.PORT || 5000);
+app.listen(process.env.PORT || 3000);
 
 var passHash={
 	before: "de{crazy}",
@@ -46,7 +46,7 @@ connection.query('USE dailyentity');*/
 
 
 // Use new db
-var client=new pg.Client(process.env.DATABASE_URL);
+var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
 client.connect();
 /*client.query("SELECT * FROM posts LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id=1",function(err,result){
 	console.log(result);
@@ -102,7 +102,7 @@ function loadTagPage(clientId){
 		var rows=result.rows;
 		if (Object.keys(rows).length==0){
 			// Send the tag page
-			connection.query("INSERT INTO tags (tag_name, tag_description) VALUES($1,'')",[tag],function(err,result){
+			client.query("INSERT INTO tags (tag_name, tag_description) VALUES($1,'')",[tag],function(err,result){
 				debug(DEBUG_INFO,"Tag '"+tag+"' created");
 				sendTagPage(this.clientId);
 			}.bind(this)); // Pass context of 'this' into function
@@ -135,7 +135,7 @@ function loadTagPage(clientId){
 								pid: pid
 							}
 							
-							client.query("SELECT * FROM comments LEFT JOIN users ON comments.user_id=users.user_id WHERE post_id="+rows[0].post_id,function(err,result){
+							client.query("SELECT * FROM comments LEFT JOIN users ON comments.user_id=users.user_id WHERE post_id="+rows[0].post_id+" ORDER BY comment_id DESC",function(err,result){
 								var rows=result.rows;
 								var tmp=[];
 								
@@ -215,11 +215,10 @@ function sendTagPage(clientId){
 	var p={
 		navbar_links: "",
 		notifications: "",
-		account_menu: "<form style='padding-left:5px;padding-right:5px;' action='#'><div class='control-group' id='logincontrols'><li><input id='loginUsername' type='text' placeholder='username'></li><li><input id='loginPass' type='password' placeholder='password'></li></div><li><button id='signupButton' onClick='modifyLogin()' class='btn'>sign up</button><button id='loginSubmit' onClick='loginUser()' class='btn btn-primary pull-right'>login</button></li></form>"
+		account_menu: "<form style='padding-left:5px;padding-right:5px;'><div class='control-group' id='logincontrols'><li><input id='loginUsername' type='text' placeholder='username'></li><li><input id='loginPass' type='password' placeholder='password'></li></div><li><button type='button' id='signupButton' onClick='modifyLogin()' class='btn'>sign up</button><button type='button' id='loginSubmit' onClick='loginUser()' class='btn btn-primary pull-right'>login</button></form></li>"
 	}
 	
 	if (global.client[clientId].request.session.userId!=undefined){
-		console.log("User already logged in!");
 		p.account_menu="<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#'>Sign out</a></li>";
 		v.user_name=global.client[clientId].request.session.username;
 	}
@@ -279,11 +278,10 @@ function sendTagPage(clientId){
 function postContent(user_id,content,tags,callback){
 	this.tags=tags;
 	client.query("INSERT INTO posts (post, user_id, timestamp) VALUES($1,$2,now()) RETURNING post_id",[content,user_id],function(err,result){
-		console.log(err);
 		this.postId=result.rows[0].post_id;
 		this.tagTotal=tags.length;
 		
-		resolveTags(tags,function(t){
+		resolveTags(this.tags,function(t){
 			for (i in t){
 				client.query("INSERT INTO post_tags (post_id, tag_id) VALUES($1,$2)",[this.postId,t[i]],function(err,result){
 					this.tagTotal--;
@@ -297,17 +295,38 @@ function postContent(user_id,content,tags,callback){
 	}.bind(this));
 }
 
+function postComment(user_id,post_id,content,tags,callback){
+	// Insert post
+	this.post_id=post_id;
+	this.tags=tags;
+	client.query("INSERT INTO comments (comment,user_id,post_id,timestamp) VALUES($1,$2,$3,now()) RETURNING comment_id",[content,user_id,post_id],function(err,result){
+		// Find out what tags the post contains
+		this.comment_id=result.rows[0].comment_id;
+		resolveTags(this.tags,function(t){
+			this.tagTotal=t.length;
+			for (i in t){
+				client.query("SELECT modifyPostTags($1, $2)",[this.post_id,t[i]],function(err,result){
+					// Tag already exists for post
+					this.tagTotal--;
+					if (this.tagTotal==0){
+						callback(this.post_id);
+					}
+				}.bind(this));
+			}
+		}.bind(this));
+	}.bind(this));
+}
+
 function resolveTags(tags,callback){
 	this.tags=tags;
 	this.resolved=[];
 	this.totalTags=tags.length;
 	
 	for (i in tags){
-		client.query("SELECT tag_id FROM tags WHERE tag_name=$1",[tags[i]],function(err,result){
-			var rows=result.rows;
-			this.resolved.push(rows[0].tag_id);
+		client.query("SELECT findTag($1)",[tags[i]],function(err,result){
+			this.resolved.push(result.rows[0].findtag);
 			this.totalTags--;
-			
+
 			if (this.totalTags==0){
 				callback(this.resolved);
 			}
@@ -321,10 +340,10 @@ app.get('/tag/*',function(req,res){
 	loadTagPage(clientId);
 });
 
-app.get('/test',function(req,res){
-	postContent(1,"Hello worldzzzz",["atgar","bacon"],null);
-	
-	res.end();
+app.get('/',function(req,res){
+	var clientId=createClient(req,res);
+	global.client[clientId].page_data.params[0]="news";
+	loadTagPage(clientId);
 });
 
 everyone.now.login=function(username,password){
@@ -351,28 +370,40 @@ everyone.now.login=function(username,password){
 everyone.now.signup=function(username,password,email){
 	this.username=username.toLowerCase();
 	this.email=email.toLowerCase();
-	client.query("INSERT INTO users (name, avatar_url, password, email) VALUES($1,'http://i.imgur.com/2KeOZ.png',$2,$3) RETURNING user_id",[username,password,email],function(err,result){
-		this.user.session.userId=result.rows[0].user_id;
-		this.user.session.username=this.username;
-		this.user.session.avatar_url='http://i.imgur.com/2KeOZ.png';
-		
-		var userObject={
-			id: result.rows[0].user_id,
-			name: this.username,
-			avatar_url: 'http://i.imgur.com/2KeOZ.png',
-			email: this.email
+	this.password=password;
+	
+	client.query("SELECT user_id FROM users WHERE name=$1",[username],function(err,result){
+		var rows=result.rows;
+		if (Object.keys(rows).length==0){
+			// They don't exist :D
+			client.query("INSERT INTO users (name, avatar_url, password, email) VALUES($1,'http://i.imgur.com/2KeOZ.png',$2,$3) RETURNING user_id",[this.username,this.password,this.email],function(err,result){
+				this.user.session.userId=result.rows[0].user_id;
+				this.user.session.username=this.username;
+				this.user.session.avatar_url='http://i.imgur.com/2KeOZ.png';
+
+				var userObject={
+					id: result.rows[0].user_id,
+					name: this.username,
+					avatar_url: 'http://i.imgur.com/2KeOZ.png',
+					email: this.email
+				}
+
+				this.now.loginResponse(true,userObject);
+				this.user.session.save();
+			}.bind(this));
+		}else{
+			// Username already exists :(
+			this.now.signupError(1);
 		}
-		
-		this.now.loginResponse(true,userObject);
-		this.user.session.save();
 	}.bind(this));
 }
 
-everyone.now.test=function(mess){
-	console.log(mess);
-}
-
 everyone.now.postMessage=function(content,tags){
+	if (this.user.session.userId==undefined){
+		this.now.postResponse(0);
+		return;
+	}
+	
 	var post={
 		view: {
 			post_id: 0,
@@ -390,10 +421,39 @@ everyone.now.postMessage=function(content,tags){
 		template: fs.readFileSync('./views/tag_page/partials/post.mustache','utf8')
 	}
 	
+	this.now.postResponse(1);
 	postContent(post.userId,content,tags,function(postId){
 		this.postId=postId;
 		everyone.now.newPost(mustache.to_html(this.template,this.view,this.partials));
 	}.bind(post));
+}
+
+everyone.now.postComment=function(post_id,content,tags){
+	if (this.user.session.userId==undefined){
+		this.now.commentResponse(0);
+		return;
+	}
+	
+	var comment={
+		view: {
+			avatar_url: this.user.session.avatar_url,
+			user_name: this.user.session.username
+		},
+		
+		partials: {
+			comment: content
+		},
+		
+		userId: this.user.session.userId,
+		tags: tags,
+		template: fs.readFileSync('./views/tag_page/partials/comment.mustache','utf8')
+	}
+	
+	this.now.commentResponse(1,post_id);
+	postComment(comment.userId,post_id,content,tags,function(postId){
+		this.postId=postId;
+		everyone.now.newComment(this.postId,mustache.to_html(this.template,this.view,this.partials));
+	}.bind(comment));
 }
 
 app.get('/version',function(req,res){

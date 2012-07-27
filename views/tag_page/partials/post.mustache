@@ -6,6 +6,7 @@
 		<blockquote style="background-color:#f5f5f5;padding-top:10px;">
 			<p>{{>post_content}}</p>
 			<p class="pull-right" style="margin-right:10px;">
+				<i id="reply-{{post_id}}-icon" class="icon-share-alt" onClick="doComment({{post_id}})"></i>&nbsp;
 				<i id="comments-{{post_id}}-icon" class="icon-comment" onClick="$('#comments-{{post_id}}-icon').toggleClass('icon-white');$('#comments-{{post_id}}').toggle(500);"></i><sup><sup>{{total_comments}}</sup></sup>
 			</p>&nbsp;
 		</blockquote>
