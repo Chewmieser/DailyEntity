@@ -399,6 +399,10 @@ everyone.now.signup=function(username,password,email){
 	}.bind(this));
 }
 
+everyone.now.logout=function(){
+	this.session.destroy(function(err){});
+}
+
 everyone.now.postMessage=function(content,tags){
 	if (this.user.session.userId==undefined){
 		this.now.postResponse(0);

@@ -24,6 +24,11 @@ var commentEditSource='<div id="ceditContainer" class="row" style="margin-left:0
 	window.webkitNotifications.requestPermission();
 }*/
 
+function logout(){
+	now.logout();
+	$('#account_menu').html("<form style='padding-left:5px;padding-right:5px;'><div class='control-group' id='logincontrols'><li><input id='loginUsername' type='text' placeholder='username'></li><li><input id='loginPass' type='password' placeholder='password'></li></div><li><button type='button' id='signupButton' onClick='modifyLogin()' class='btn'>sign up</button><button type='button' id='loginSubmit' onClick='loginUser()' class='btn btn-primary pull-right'>login</button></form></li>");
+}
+
 function doComment(post_id){
 	console.log(post_id);
 	this.post_id=post_id;
@@ -145,7 +150,7 @@ now.loginResponse=function(l,u){
 	}else{
 		$('#accountMenuDrop').removeClass('open');
 		$('#account_username').html(u.name);
-		$('#account_menu').html("<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#'>Sign out</a></li>");
+		$('#account_menu').html("<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout()'>Sign out</a></li>");
 	}
 }
 
