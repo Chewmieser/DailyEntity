@@ -52,11 +52,6 @@ client.connect();
 	console.log(result);
 });*/
 
-client.query("SELECT  proname FROM pg_catalog.pg_namespace n JOIN pg_catalog.pg_proc p ON pronamespace = n.oid WHERE nspname = 'public'",function(err,result){
-	if (err){console.log(err);}
-	console.log(result);
-});
-
 // Configuration
 const DEBUG_INFO=0, DEBUG_WARN=1, DEBUG_ERROR=2;
 global.client=[];
@@ -341,6 +336,12 @@ function resolveTags(tags,callback){
 
 // Opening a tag page
 app.get('/tag/*',function(req,res){
+	console.log("asking for functions...");
+	client.query("SELECT  proname FROM pg_catalog.pg_namespace n JOIN pg_catalog.pg_proc p ON pronamespace = n.oid WHERE nspname = 'public'",function(err,result){
+		if (err){console.log(err);}
+		console.log(result);
+	});
+	
 	var clientId=createClient(req,res);
 	loadTagPage(clientId);
 });
