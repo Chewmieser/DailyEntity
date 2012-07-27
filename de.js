@@ -400,7 +400,7 @@ everyone.now.signup=function(username,password,email){
 }
 
 everyone.now.logout=function(){
-	this.session.destroy(function(err){});
+	this.user.session.destroy(function(err){});
 }
 
 everyone.now.postMessage=function(content,tags){
