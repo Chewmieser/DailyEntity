@@ -463,6 +463,7 @@ everyone.now.modifyProfile=function(avatar_url){
 	}
 	
 	this.user.session.avatar_url=avatar_url;
+	this.user.session.save();
 	
 	client.query("UPDATE users SET avatar_url=$1 WHERE user_id=$2",[avatar_url,this.user.session.userId],function(){});
 }
