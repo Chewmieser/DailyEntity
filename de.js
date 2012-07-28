@@ -26,8 +26,8 @@ var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
 app.use(express.session({secret: "de123dezxc", store: sessionStore}));*/
 
 // Production session store !!!----!!!
-var HerokuRedisStore=require('connect-heroku-redis')(express);
-app.use(express.session({secret: "de123dezxc", store: new HerokuRedisStore}));
+var sessionStore=require('connect-heroku-redis')(express);
+app.use(express.session({secret: "de123dezxc", store: new sessionStore}));
 
 app.listen(process.env.PORT || 3000);
 
@@ -444,6 +444,15 @@ everyone.now.login=function(username,password){
 	}.bind(this));
 }
 
+/*everyone.now.requestActiveUsers=function(){
+	// Iterate through session storage
+	for (i in Object.keys(sessionStore.sessions)){
+		var sess=sessionStore.sessions[Object.keys(sessionStore.sessions)[i]];
+		var curr=JSON.parse(sess);
+		console.log((Date.now()-curr.lastAccess)/1000);
+	}
+}*/
+
 everyone.now.signup=function(username,password,email){
 	this.username=username.toLowerCase();
 	this.email=email.toLowerCase();
@@ -553,3 +562,5 @@ app.get('*',function(req,res){
 		res.end();
 	}
 });
+
+console.log(sessionStore);
