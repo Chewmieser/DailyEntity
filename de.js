@@ -121,7 +121,7 @@ function loadTagPage(clientId){
 				if (Object.keys(rows).length>0){
 					for (var r in Object.keys(rows)){
 						global.client[this.clientId].page_data.total_posts++;
-						client.query("SELECT * FROM posts LEFT JOIN attachments ON posts.post_id=attachments.post_id LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id="+rows[r].post_id,function(err,result){
+						client.query("SELECT posts.post, posts.user_id, posts.post_id, users.name, users.avatar_url, attachments.attachment_url FROM posts LEFT JOIN attachments ON posts.post_id=attachments.post_id LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id="+rows[r].post_id,function(err,result){
 							var rows=result.rows;
 							var pid=global.client[this.clientId].page_data.posts.push({
 								post: rows[0].post,
@@ -146,17 +146,11 @@ function loadTagPage(clientId){
 								pid: pid
 							}
 							
-							client.query("SELECT * FROM comments LEFT JOIN attachments ON comments.comment_id=attachments.comment_id LEFT JOIN users ON comments.user_id=users.user_id WHERE comments.post_id="+rows[0].post_id+" ORDER BY comments.comment_id DESC",function(err,result){
+							client.query("SELECT comments.comment_id, comments.comment, comments.user_id, comments.post_id, comments.timestamp, attachments.attachment_url, users.name, users.avatar_url FROM comments LEFT JOIN attachments ON comments.comment_id=attachments.comment_id LEFT JOIN users ON comments.user_id=users.user_id WHERE comments.post_id="+rows[0].post_id+" ORDER BY comments.comment_id DESC",function(err,result){
 								var rows=result.rows;
 								var tmp=[];
 								
 								for (i in rows){
-									// Check for existing commentId before pushing!
-									
-									// Comment exist in tmp?
-									// Yes: Does this row have an attachment_url?
-									// No: Push the tmpCurr object. Does this row have an attachment_url?
-									
 									// Go through each element
 									var found=false;
 									for (ii in tmp){
