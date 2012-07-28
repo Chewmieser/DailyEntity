@@ -445,14 +445,30 @@ everyone.now.login=function(username,password){
 	}.bind(this));
 }
 
-/*everyone.now.requestActiveUsers=function(){
-	// Iterate through session storage
-	for (i in Object.keys(sessionStore.sessions)){
-		var sess=sessionStore.sessions[Object.keys(sessionStore.sessions)[i]];
-		var curr=JSON.parse(sess);
-		console.log((Date.now()-curr.lastAccess)/1000);
+everyone.now.requestActiveUsers=function(){
+	client.query("SELECT name FROM users WHERE age(now(),last_active) < INTERVAL '10 minutes'",function(err,result){
+		if (Object.keys(result.rows).length>0){
+			var tmp=[];
+			for (i in result.rows){
+				tmp.push(result.rows[i].name);
+			}
+
+			this.now.returnActiveUsers(tmp);
+		}else{
+			this.now.returnActiveUsers([]);
+		}
+	}.bind(this));
+}
+
+everyone.now.ping=function(){
+	if (this.user.session.userId==undefined){
+		return;
 	}
-}*/
+	
+	client.query("UPDATE users SET last_active=now() WHERE user_id=$1",[this.user.session.userId],function(){});
+	
+	this.now.pong();
+}
 
 everyone.now.signup=function(username,password,email){
 	this.username=username.toLowerCase();
@@ -563,5 +579,3 @@ app.get('*',function(req,res){
 		res.end();
 	}
 });
-
-console.log(sessionStore);

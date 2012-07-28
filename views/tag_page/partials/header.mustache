@@ -21,10 +21,18 @@ var commentEditSource='<div id="ceditContainer" class="row" style="margin-left:0
 
 now.ready(function(){
 	now.getPopularTags();
+	now.requestActiveUsers();
 	if ($('#account_username').html()!='sign in'){
 		now.loadNavBar();
 	}
+	
+	ping();
 });
+
+function ping(){
+	now.ping();
+	setTimeout("ping()",1000*60*5);
+}
 
 /*if (window.webkitNotifications.checkPermission()!=0){
 	window.webkitNotifications.requestPermission();
@@ -157,6 +165,10 @@ function loginUser(){
 	now.login($('#loginUsername').val(),$('#loginPass').val());
 }
 
+now.pong=function(){
+	now.requestActiveUsers();
+}
+
 now.doPopularTags=function(tags){
 	var tmp="";
 	
@@ -169,6 +181,16 @@ now.doPopularTags=function(tags){
 
 now.signupError=function(id){
 	$('#logincontrols').addClass('error');
+}
+
+now.returnActiveUsers=function(users){
+	var tmp="";
+	
+	for (i in users){
+		tmp+="<a href='/user/"+users[i]+"' class='label'>"+users[i]+"</a> ";
+	}
+	
+	$('#activeUsersContainer').html(tmp);
 }
 
 now.loadNavBarTags=function(tags){
