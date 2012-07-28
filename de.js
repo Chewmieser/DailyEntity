@@ -17,6 +17,10 @@ var md5=require("MD5");
 
 // Create server, connect to MySQL
 var app=express.createServer();
+var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+client.connect();
+
+// app.configure options
 app.use(express.logger('dev'));
 app.use(express.cookieParser());
 
@@ -30,29 +34,17 @@ var hredis=require('connect-heroku-redis')(express);
 var sessionStore=new hredis;
 app.use(express.session({secret: "de123dezxc", store: sessionStore}));
 
+// Begin listening
 app.listen(process.env.PORT || 3000);
 
+// Shake it like a salt shaker
 var passHash={
 	before: "de{crazy}",
 	after: "12deFunlol1z"
 }
 
+// Start now.js
 var everyone=nowjs.initialize(app,{socketio: {"transports": ["xhr-polling"], "polling duration": 10}});
-
-/*var connection=mysql.createConnection({
-	host:'0.0.0.0',
-	user:'root'
-});
-connection.connect();
-connection.query('USE dailyentity');*/
-
-
-// Use new db
-var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
-client.connect();
-/*client.query("SELECT * FROM posts LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id=1",function(err,result){
-	console.log(result);
-});*/
 
 // Configuration
 const DEBUG_INFO=0, DEBUG_WARN=1, DEBUG_ERROR=2;
@@ -240,10 +232,6 @@ function sendTagPage(clientId){
 		notification_count: 0,
 		user_name: "sign in"
 	}
-
-	//if (global.client[clientId].resource_id.session.userId!=null){
-		//v.user_name=global.client[clientId].resource_id.session.user_name;
-	//}
 	
 	var p={
 		navbar_links: "",
@@ -255,11 +243,6 @@ function sendTagPage(clientId){
 		p.account_menu="<li><a href='#' onClick='showProfilePage()'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout();'>Sign out</a></li>";
 		v.user_name=global.client[clientId].request.session.username;
 	}
-	
-	// If client session exists...
-	// <li><a href="#">Profile</a></li>
-	// <li class="divider"></li>
-	// <li><a href="#">Sign out</a></li>
 	
 	partials.nav=mustache.to_html(templates.navBar,v,p);
 	
@@ -399,6 +382,7 @@ function resolveTags(tags,callback){
 	this.totalTags=tags.length;
 	
 	for (i in tags){
+		console.log(tags[i]);
 		client.query("SELECT findTag($1)",[tags[i]],function(err,result){
 			if (err){ console.log(err); }
 			this.resolved.push(result.rows[0].findtag);
@@ -631,6 +615,7 @@ everyone.now.postMessage=function(content,tags,attachments){
 	this.now.postResponse(1);
 	postContent(post.userId,content,tags,attachments,function(postId){
 		this.postId=postId;
+		this.view.post_id=postId;
 		everyone.now.newPost(mustache.to_html(this.template,this.view,this.partials),this.tags);
 	}.bind(post));
 }
