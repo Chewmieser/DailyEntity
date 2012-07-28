@@ -17,6 +17,7 @@
 
 var tagPage="{{tag_name}}";
 var postTags=[tagPage];
+var postAttachments=[];
 var commentEditSource='<div id="ceditContainer" class="row" style="margin-left:0px;"><div class="span1"></div><div class="span11"><iframe id="commentEditor" class="well" style="width:99%;height:100px;padding:5px;"></iframe><div style="margin-top:-20px;"><div class="btn-toolbar" style="display:inline;"><div class="btn-group" id="attach"><button class="btn"><i class="icon-upload"></i></button><button class="btn"><i class="icon-picture"></i></button></div><div class="btn-group"><button class="btn" onClick="doBold(this);"><i class="icon-bold"></i></button><button class="btn"><i class="icon-italic"></i></button></div></div><button id="sendCommentButton" class="btn btn-success btn-large pull-right" type="submit"><i class="icon-comment icon-white"></i> Comment</button></div><br><br></div></div>';
 
 now.ready(function(){
@@ -26,7 +27,7 @@ now.ready(function(){
 		now.loadNavBar();
 	}
 	
-	ping();
+	setTimeout("ping()",5000);
 });
 
 function ping(){
@@ -120,7 +121,7 @@ function sendComment(post_id){
 	
 	// Send the post their way
 	$('#sendCommentButton').addClass('active');
-	now.postComment(post_id,bc,postTags);
+	now.postComment(post_id,bc,postTags,postAttachments);
 }
 
 function removeCommentBox(post_id){
@@ -133,6 +134,23 @@ function addTag(tagName){
 	if (postTags.indexOf(tagName)==-1){
 		postTags.push(tagName)
 	}
+}
+
+function addAttachment(image){
+	postAttachments.push(image);
+}
+
+function showProfilePage(){
+	$('#account_menu').html("<form style='padding-left:5px;padding-right:5px;'><div class='control-group' id='profileControls'><li><input id='profileAvatarUrl' type='text' placeholder='avatar url'></li></div><li><button type='button' id='cancelProfileModBt' onClick='cancelProfileMod()' class='btn'>cancel</button><button type='button' id='saveProfileModBt' onClick='saveProfileMod()' class='btn btn-primary pull-right'>save</button></form></li>");
+}
+
+function saveProfileMod(){
+	now.modifyProfile($('#profileAvatarUrl').val());
+	$('#account_menu').html("<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout()'>Sign out</a></li>");
+}
+
+function cancelProfileMod(){
+	$('#account_menu').html("<li><a href='#' onClick='showProfilePage()'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout()'>Sign out</a></li>");
 }
 
 function modifyLogin(){
@@ -214,6 +232,7 @@ now.postResponse=function(id){
 		
 		$body.html('');
 		postTags=[tagPage];
+		postAttachments=[];
 	}
 	
 	$('#submitPostBt').removeClass('active');
@@ -224,6 +243,7 @@ now.commentResponse=function(id,post_id){
 		$('#accountMenuDrop').addClass('open');
 	}else{
 		postTags=[tagPage];
+		postAttachments=[];
 		removeCommentBox(post_id);
 	}
 }
@@ -252,7 +272,7 @@ now.loginResponse=function(l,u){
 	}else{
 		$('#accountMenuDrop').removeClass('open');
 		$('#account_username').html(u.name);
-		$('#account_menu').html("<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout()'>Sign out</a></li>");
+		$('#account_menu').html("<li><a href='#' id='profileLink' onClick='showProfilePage();'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout()'>Sign out</a></li>");
 		
 		now.loadNavBar();
 	}
@@ -266,7 +286,7 @@ function doPost(){
 	
 	// Send the post their way
 	$('#submitPostBt').addClass('active');
-	now.postMessage(bc,postTags);
+	now.postMessage(bc,postTags,postAttachments);
 }
 
 // Hashtag parsing
@@ -286,7 +306,8 @@ String.prototype.parseMention = function() {
 
 String.prototype.parseImage = function(){
 	return this.replace(/(https?:\/\/.*\.(?:png|jpg|gif))/i, function(t){
-		$('#attach').append("<div class='btn active'><img src='"+t+"' style='width:15px;height:15px;' /></div>")
+		addAttachment(t);
+		//$('#attach').append("<div class='btn active'><img src='"+t+"' style='width:15px;height:15px;' /></div>");
 		return "<a href='#' class='label label-success'><i class='icon-picture icon-white'></i> Attachment</a>";
 	});
 }

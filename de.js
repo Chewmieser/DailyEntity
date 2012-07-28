@@ -121,38 +121,76 @@ function loadTagPage(clientId){
 				if (Object.keys(rows).length>0){
 					for (var r in Object.keys(rows)){
 						global.client[this.clientId].page_data.total_posts++;
-						client.query("SELECT * FROM posts LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id="+rows[r].post_id,function(err,result){
+						client.query("SELECT * FROM posts LEFT JOIN attachments ON posts.post_id=attachments.post_id LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id="+rows[r].post_id,function(err,result){
 							var rows=result.rows;
 							var pid=global.client[this.clientId].page_data.posts.push({
 								post: rows[0].post,
 								user_id: rows[0].user_id,
 								post_id: rows[0].post_id,
 								user_name: rows[0].name,
-								avatar_url: rows[0].avatar_url
+								avatar_url: rows[0].avatar_url,
+								attachments: []
 							})-1;
+							
+							// Peer into data for attachments
+							var attachments=[];
+							for (i in rows){
+								if (rows[i].attachment_url!=null){
+									attachments.push(rows[i].attachment_url);
+								}
+							}
+							global.client[this.clientId].page_data.posts[pid].attachments=attachments;
 							
 							var tmp={
 								clientId: this.clientId,
 								pid: pid
 							}
 							
-							client.query("SELECT * FROM comments LEFT JOIN users ON comments.user_id=users.user_id WHERE post_id="+rows[0].post_id+" ORDER BY comment_id DESC",function(err,result){
+							client.query("SELECT * FROM comments LEFT JOIN attachments ON comments.comment_id=attachments.comment_id LEFT JOIN users ON comments.user_id=users.user_id WHERE comments.post_id="+rows[0].post_id+" ORDER BY comments.comment_id DESC",function(err,result){
 								var rows=result.rows;
 								var tmp=[];
 								
 								for (i in rows){
-									var tmpCurr={
-										id: rows[i].comment_id,
-										comment: rows[i].comment,
-										user_id: rows[i].user_id,
-										post_id: rows[i].post_id,
-										timestamp: rows[i].timestamp
+									// Check for existing commentId before pushing!
+									
+									// Comment exist in tmp?
+									// Yes: Does this row have an attachment_url?
+									// No: Push the tmpCurr object. Does this row have an attachment_url?
+									
+									// Go through each element
+									var found=false;
+									for (ii in tmp){
+										// Is this our proper element?
+										if (tmp[ii].id==rows[i].comment_id){
+											// Add our attachment, if available
+											found=true;
+											if (rows[i].attachment_url!=null){
+												tmp[ii].attachments.push(rows[i].attachment_url);
+											}
+										}
 									}
 									
-									var curr=tmp.push(tmpCurr)-1;
-									tmp[curr].user_name=rows[i].name;
-									tmp[curr].user_id=rows[i].user_id;
-									tmp[curr].avatar_url=rows[i].avatar_url;
+									// We never found it... Create the object
+									if (!found){
+										var tmpCurr={
+											id: rows[i].comment_id,
+											comment: rows[i].comment,
+											user_id: rows[i].user_id,
+											post_id: rows[i].post_id,
+											timestamp: rows[i].timestamp,
+											attachments: []
+										}
+										
+										if (rows[i].attachment_url!=null){
+											tmpCurr.attachments.push(rows[i].attachment_url);
+										}
+
+										var curr=tmp.push(tmpCurr)-1;
+										tmp[curr].user_name=rows[i].name;
+										tmp[curr].user_id=rows[i].user_id;
+										tmp[curr].avatar_url=rows[i].avatar_url;
+									}
+									
 								}
 								global.client[this.clientId].page_data.posts[this.pid].comments=tmp;
 								
@@ -220,7 +258,7 @@ function sendTagPage(clientId){
 	}
 	
 	if (global.client[clientId].request.session.userId!=undefined){
-		p.account_menu="<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout();'>Sign out</a></li>";
+		p.account_menu="<li><a href='#' onClick='showProfilePage()'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout();'>Sign out</a></li>";
 		v.user_name=global.client[clientId].request.session.username;
 	}
 	
@@ -251,6 +289,20 @@ function sendTagPage(clientId){
 				comments: ""
 			}
 			
+			if (global.client[clientId].page_data.posts[i].attachments.length>0){
+				// We've got attachments. Modify the post content.
+				var tmp="";
+				for (ii in global.client[clientId].page_data.posts[i].attachments){
+					tmp+='<li class="span2"><div class="thumbnail"><img src="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" /></div></li>';
+				}
+
+				ii++
+
+				p.post_content+='<br><br><small>Attachments <sup><span class="badge">'+ii+'</span></sup></small><p><ul class="thumbnails">';
+				p.post_content+=tmp;
+				p.post_content+="</ul></p>";
+			}
+			
 			for (ii in global.client[clientId].page_data.posts[i].comments){
 				var vv={
 					user_name: global.client[clientId].page_data.posts[i].comments[ii].user_name,
@@ -259,6 +311,20 @@ function sendTagPage(clientId){
 				
 				var pp={
 					comment: global.client[clientId].page_data.posts[i].comments[ii].comment
+				}
+				
+				if (global.client[clientId].page_data.posts[i].comments[ii].attachments.length>0){
+					// We've got attachments. Modify the post content.
+					var tmp="";
+					for (iii in global.client[clientId].page_data.posts[i].comments[ii].attachments){
+						tmp+='<li class="span2"><div class="thumbnail"><img src="'+global.client[clientId].page_data.posts[i].comments[ii].attachments[iii]+'" /></div></li>';
+					}
+
+					iii++;
+
+					pp.comment+='<br><br><small>Attachments <sup><span class="badge">'+iii+'</span></sup></small><p><ul class="thumbnails">';
+					pp.comment+=tmp;
+					pp.comment+="</ul></p>";
 				}
 				
 				p.comments+=mustache.to_html(templates.comment,vv,pp);
@@ -276,8 +342,9 @@ function sendTagPage(clientId){
 	killClient(clientId);
 }
 
-function postContent(user_id,content,tags,callback){
+function postContent(user_id,content,tags,attachments,callback){
 	this.tags=tags;
+	this.attachments=attachments;
 	client.query("INSERT INTO posts (post, user_id, timestamp) VALUES($1,$2,now()) RETURNING post_id",[content,user_id],function(err,result){
 		this.postId=result.rows[0].post_id;
 		this.tagTotal=tags.length;
@@ -288,6 +355,13 @@ function postContent(user_id,content,tags,callback){
 					this.tagTotal--;
 
 					if (this.tagTotal==0){
+						// Save post attachments now
+						if (this.attachments.length>0){
+							for (ii in this.attachments){
+								client.query("INSERT INTO attachments (post_id, attachment_url) VALUES($1, $2)",[this.postId, this.attachments[ii]],function(err,result){});
+							}
+						}
+						
 						callback(this.postId);
 					}
 				}.bind(this));
@@ -296,10 +370,11 @@ function postContent(user_id,content,tags,callback){
 	}.bind(this));
 }
 
-function postComment(user_id,post_id,content,tags,callback){
+function postComment(user_id,post_id,content,tags,attachments,callback){
 	// Insert post
 	this.post_id=post_id;
 	this.tags=tags;
+	this.attachments=attachments;
 	client.query("INSERT INTO comments (comment,user_id,post_id,timestamp) VALUES($1,$2,$3,now()) RETURNING comment_id",[content,user_id,post_id],function(err,result){
 		// Find out what tags the post contains
 		this.comment_id=result.rows[0].comment_id;
@@ -310,6 +385,12 @@ function postComment(user_id,post_id,content,tags,callback){
 					// Tag already exists for post
 					this.tagTotal--;
 					if (this.tagTotal==0){
+						if (this.attachments.length>0){
+							for (ii in this.attachments){
+								client.query("INSERT INTO attachments (comment_id, attachment_url) VALUES($1, $2)",[this.comment_id, this.attachments[ii]],function(err,result){});
+							}
+						}
+						
 						callback(this.post_id);
 					}
 				}.bind(this));
@@ -381,6 +462,16 @@ app.get('/',function(req,res){
 	global.client[clientId].page_data.params[0]="news";
 	loadTagPage(clientId);
 });
+
+everyone.now.modifyProfile=function(avatar_url){
+	if (this.user.session.userId==undefined){
+		return;
+	}
+	
+	this.user.session.avatar_url=avatar_url;
+	
+	client.query("UPDATE users SET avatar_url=$1 WHERE user_id=$2",[avatar_url,this.user.session.userId],function(){});
+}
 
 everyone.now.loadNavBar=function(){
 	this.tags=[];
@@ -505,7 +596,7 @@ everyone.now.logout=function(){
 	this.user.session.destroy(function(err){});
 }
 
-everyone.now.postMessage=function(content,tags){
+everyone.now.postMessage=function(content,tags,attachments){
 	if (this.user.session.userId==undefined){
 		this.now.postResponse(0);
 		return;
@@ -528,14 +619,28 @@ everyone.now.postMessage=function(content,tags){
 		template: fs.readFileSync('./views/tag_page/partials/post.mustache','utf8')
 	}
 	
+	if (attachments.length>0){
+		// We've got attachments. Modify the post content.
+		var tmp="";
+		for (i in attachments){
+			tmp+='<li class="span2"><div class="thumbnail"><img src="'+attachments[i]+'" /></div></li>';
+		}
+		
+		i++
+		
+		post.partials.post_content+='<br><br><small>Attachments <sup><span class="badge">'+i+'</span></sup></small><p><ul class="thumbnails">';
+		post.partials.post_content+=tmp;
+		post.partials.post_content+="</ul></p>";
+	}
+	
 	this.now.postResponse(1);
-	postContent(post.userId,content,tags,function(postId){
+	postContent(post.userId,content,tags,attachments,function(postId){
 		this.postId=postId;
 		everyone.now.newPost(mustache.to_html(this.template,this.view,this.partials),this.tags);
 	}.bind(post));
 }
 
-everyone.now.postComment=function(post_id,content,tags){
+everyone.now.postComment=function(post_id,content,tags,attachments){
 	if (this.user.session.userId==undefined){
 		this.now.commentResponse(0);
 		return;
@@ -556,8 +661,22 @@ everyone.now.postComment=function(post_id,content,tags){
 		template: fs.readFileSync('./views/tag_page/partials/comment.mustache','utf8')
 	}
 	
+	if (attachments.length>0){
+		// We've got attachments. Modify the post content.
+		var tmp="";
+		for (i in attachments){
+			tmp+='<li class="span2"><div class="thumbnail"><img src="'+attachments[i]+'" /></div></li>';
+		}
+		
+		i++;
+		
+		comment.partials.comment+='<br><br><small>Attachments <sup><span class="badge">'+i+'</span></sup></small><p><ul class="thumbnails">';
+		comment.partials.comment+=tmp;
+		comment.partials.comment+="</ul></p>";
+	}
+	
 	this.now.commentResponse(1,post_id);
-	postComment(comment.userId,post_id,content,tags,function(postId){
+	postComment(comment.userId,post_id,content,tags,attachments,function(postId){
 		this.postId=postId;
 		everyone.now.newComment(this.postId,mustache.to_html(this.template,this.view,this.partials));
 	}.bind(comment));
