@@ -335,6 +335,24 @@ function resolveTags(tags,callback){
 	}
 }
 
+function resolveTagsById(tags,callback){
+	this.tags=tags;
+	this.resolved=[];
+	this.totalTags=tags.length;
+	
+	for (i in tags){
+		client.query("SELECT tag_name FROM tags WHERE tag_id=$1",[tags[i]],function(err,result){
+			if (err){ console.log(err); }
+			this.resolved.push(result.rows[0].tag_name);
+			this.totalTags--;
+
+			if (this.totalTags==0){
+				callback(this.resolved);
+			}
+		}.bind(this));
+	}
+}
+
 function generatePopularTags(callback){
 	this.tags=[];
 	client.query("SELECT post_tags.post_tags_id, tags.tag_name FROM tags INNER JOIN post_tags ON tags.tag_id = post_tags.tag_id;",function(err,result){
@@ -362,6 +380,42 @@ app.get('/',function(req,res){
 	global.client[clientId].page_data.params[0]="news";
 	loadTagPage(clientId);
 });
+
+everyone.now.loadNavBar=function(){
+	this.tags=[];
+	client.query("SELECT * FROM navlinks WHERE user_id=$1",[this.user.session.userId],function(err,result){
+		if (Object.keys(result.rows).length>0){
+			for (i in result.rows){
+				this.tags.push(result.rows[i].tag_id);
+			}
+		
+			resolveTagsById(this.tags,function(ta){
+				this.now.loadNavBarTags(ta);
+			}.bind(this));
+		}
+	}.bind(this));
+}
+
+everyone.now.removeNavLink=function(tagName){
+	if (this.user.session.userId==undefined){
+		return;
+	}
+	
+	resolveTags([tagName],function(tagIds){
+		client.query("DELETE FROM navlinks WHERE tag_id=$1 AND user_id=$2",[tagIds[0],this.user.session.userId],function(err,result){});
+	}.bind(this));
+}
+
+everyone.now.saveNavLink=function(tagName){
+	if (this.user.session.userId==undefined){
+		this.now.tagSaveError(1);
+		return;
+	}
+	
+	resolveTags([tagName],function(tagIds){
+		client.query("INSERT INTO navlinks (tag_id, user_id) VALUES($1,$2)",[tagIds[0],this.user.session.userId],function(err,result){});
+	}.bind(this));
+}
 
 everyone.now.getPopularTags=function(){
 	generatePopularTags(function(tags){

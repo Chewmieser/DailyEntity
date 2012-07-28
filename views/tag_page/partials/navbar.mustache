@@ -7,9 +7,9 @@
 			</a>
 			
 			<!-- Navbar items -->
-			<ul class="nav">
+			<ul class="nav" id="navlinks">
 				{{>navbar_links}}
-				<li><a href="#" onMouseOver="var icon=document.getElementById('pIcon');icon.className='icon-pencil icon-white';icon.style.opacity=.5" onMouseOut="var icon=document.getElementById('pIcon');icon.className='icon-pencil';icon.style.opacity=1"><i id="pIcon" class="icon-pencil"></i></a></li>
+				<li id="navLinkModify"><a href="#" onMouseOver="var icon=document.getElementById('pIcon');icon.className='icon-pencil icon-white';icon.style.opacity=.5" onMouseOut="var icon=document.getElementById('pIcon');icon.className='icon-pencil';icon.style.opacity=1" onClick="doEditNavBar()"><i id="pIcon" class="icon-pencil"></i></a></li>
 			</ul>
 			
 			<ul class="nav pull-right">

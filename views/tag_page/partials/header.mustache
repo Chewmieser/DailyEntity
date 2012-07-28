@@ -21,11 +21,64 @@ var commentEditSource='<div id="ceditContainer" class="row" style="margin-left:0
 
 now.ready(function(){
 	now.getPopularTags();
+	if ($('#account_username').html()!='sign in'){
+		now.loadNavBar();
+	}
 });
 
 /*if (window.webkitNotifications.checkPermission()!=0){
 	window.webkitNotifications.requestPermission();
 }*/
+
+//<a href="#" onMouseOver="var icon=document.getElementById('pIcon');icon.className='icon-pencil icon-white';icon.style.opacity=.5" onMouseOut="var icon=document.getElementById('pIcon');icon.className='icon-pencil';icon.style.opacity=1" onClick="doEditNavBar()"><i id="pIcon" class="icon-pencil"></i></a>
+
+function doEditNavBar(){
+	// Navlink delete mode
+	$('#navlinks li a').not('#navLinkModify a').attr('style','color:#b94a48;');
+	$('#navlinks li a').not('#navLinkModify a').attr('href','#');
+	$('#navlinks li a').not('#navLinkModify a').attr('onClick','removeNavLink(this);');
+	
+	$('#navLinkModify').before("<li id='navMod'><input type='text' id='newNavLink' value='"+tagPage+"' style='width:75px;background-color:#000;height:15px;margin-top:6px;margin-bottom:0px;border:1px solid #555;'></li>").slideDown("slow");
+	$('#pIcon').attr('class','icon-remove icon-white');
+	$('#navLinkModify a').attr('onClick','stopEditingNavBar();');
+	$('#navLinkModify a').attr('onMouseOver','');
+	$('#navLinkModify a').attr('onMouseOut','');
+	$('#newNavLink').keyup(function(e){
+		if (e.which==13){
+			// Enter pressed. Do things...
+			var val=$('#newNavLink').val();
+			if (val!=""){
+				$('#navMod').before("<li><a href='/tag/"+val+"'>#"+val+"</a></li>");
+				$('#newNavLink').val('');
+				
+				now.saveNavLink(val);
+			}
+			
+			//$('#navMod').remove();
+		}
+	});
+}
+
+function removeNavLink(elem){
+	var tag_name=($(elem).html()).replace("#","");
+	$(elem).remove();
+	
+	now.removeNavLink(tag_name);
+}
+
+function stopEditingNavBar(){
+	// Disable navlink delete mode
+	$('#navlinks li a').not('#navLinkModify a').removeAttr('style');
+	$('#navlinks li a').not('#navLinkModify a').attr('href','/tag/'+($('#navlinks li a').html()).replace("#",""));
+	$('#navlinks li a').not('#navLinkModify a').removeAttr('onClick');
+	
+	$('#pIcon').attr('class','icon-pencil');
+	$('#navLinkModify a').attr('onClick','doEditNavBar();');
+	$('#navLinkModify a').attr('onMouseOver',"var icon=document.getElementById('pIcon');icon.className='icon-pencil icon-white';icon.style.opacity=.5");
+	$('#navLinkModify a').attr('onMouseOut',"var icon=document.getElementById('pIcon');icon.className='icon-pencil';icon.style.opacity=1");
+	
+	$('#navMod').remove();
+}
 
 function logout(){
 	now.logout();
@@ -108,7 +161,7 @@ now.doPopularTags=function(tags){
 	var tmp="";
 	
 	for (i in tags){
-		tmp+="<a href='/tag/"+tags[i]+"' class='label'>"+tags[i]+"</a>&nbsp;";
+		tmp+="<a href='/tag/"+tags[i]+"' class='label'>"+tags[i]+"</a> ";
 	}
 	
 	$('#popTagsContainer').html(tmp);
@@ -116,6 +169,18 @@ now.doPopularTags=function(tags){
 
 now.signupError=function(id){
 	$('#logincontrols').addClass('error');
+}
+
+now.loadNavBarTags=function(tags){
+	for (i in tags){
+		$('#navLinkModify').before("<li><a href='/tag/"+tags[i]+"'>#"+tags[i]+"</a></li>");
+	}
+}
+
+now.tagSaveError=function(id){
+	if (id==1){
+		$('#accountMenuDrop').addClass('open');
+	}
 }
 
 now.postResponse=function(id){
@@ -157,7 +222,6 @@ now.loginResponse=function(l,u){
 	//window.webkitNotifications.createNotification(null,'logged in','Kk logged in');
 	
 	if (!l){
-		
 		$('#loginUsername').removeAttr('disabled');
 		$('#loginPass').removeAttr('disabled');
 		$('#loginSubmit').removeClass('active');
@@ -167,6 +231,8 @@ now.loginResponse=function(l,u){
 		$('#accountMenuDrop').removeClass('open');
 		$('#account_username').html(u.name);
 		$('#account_menu').html("<li><a href='#'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout()'>Sign out</a></li>");
+		
+		now.loadNavBar();
 	}
 }
 
