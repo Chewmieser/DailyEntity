@@ -26,8 +26,9 @@ var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
 app.use(express.session({secret: "de123dezxc", store: sessionStore}));*/
 
 // Production session store !!!----!!!
-var sessionStore=require('connect-heroku-redis')(express);
-app.use(express.session({secret: "de123dezxc", store: new sessionStore}));
+var hredis=require('connect-heroku-redis')(express);
+var sessionStore=new hredis;
+app.use(express.session({secret: "de123dezxc", store: sessionStore}));
 
 app.listen(process.env.PORT || 3000);
 
