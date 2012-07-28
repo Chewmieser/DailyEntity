@@ -19,6 +19,9 @@ var tagPage="{{tag_name}}";
 var postTags=[tagPage];
 var commentEditSource='<div id="ceditContainer" class="row" style="margin-left:0px;"><div class="span1"></div><div class="span11"><iframe id="commentEditor" class="well" style="width:99%;height:100px;padding:5px;"></iframe><div style="margin-top:-20px;"><div class="btn-toolbar" style="display:inline;"><div class="btn-group" id="attach"><button class="btn"><i class="icon-upload"></i></button><button class="btn"><i class="icon-picture"></i></button></div><div class="btn-group"><button class="btn" onClick="doBold(this);"><i class="icon-bold"></i></button><button class="btn"><i class="icon-italic"></i></button></div></div><button id="sendCommentButton" class="btn btn-success btn-large pull-right" type="submit"><i class="icon-comment icon-white"></i> Comment</button></div><br><br></div></div>';
 
+now.ready(function(){
+	now.getPopularTags();
+});
 
 /*if (window.webkitNotifications.checkPermission()!=0){
 	window.webkitNotifications.requestPermission();
@@ -99,6 +102,16 @@ function loginUser(){
 	
 	// Send login command
 	now.login($('#loginUsername').val(),$('#loginPass').val());
+}
+
+now.doPopularTags=function(tags){
+	var tmp="";
+	
+	for (i in tags){
+		tmp+="<a href='/tag/"+tags[i]+"' class='label'>"+tags[i]+"</a>&nbsp;";
+	}
+	
+	$('#popTagsContainer').html(tmp);
 }
 
 now.signupError=function(id){

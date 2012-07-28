@@ -335,6 +335,22 @@ function resolveTags(tags,callback){
 	}
 }
 
+function generatePopularTags(callback){
+	this.tags=[];
+	client.query("SELECT post_tags.post_tags_id, tags.tag_name FROM tags INNER JOIN post_tags ON tags.tag_id = post_tags.tag_id;",function(err,result){
+		for (i in result.rows){
+			if (this.tags[result.rows[i].tag_name]==undefined){
+				this.tags[result.rows[i].tag_name]=1;
+			}else{
+				this.tags[result.rows[i].tag_name]++;
+			}
+		}
+		
+		this.tags.sort();
+		callback(Object.keys(this.tags));
+	}.bind(this));
+}
+
 // Opening a tag page
 app.get('/tag/*',function(req,res){
 	var clientId=createClient(req,res);
@@ -346,6 +362,12 @@ app.get('/',function(req,res){
 	global.client[clientId].page_data.params[0]="news";
 	loadTagPage(clientId);
 });
+
+everyone.now.getPopularTags=function(){
+	generatePopularTags(function(tags){
+		this.now.doPopularTags(tags);
+	}.bind(this));
+}
 
 everyone.now.login=function(username,password){
 	username=username.toLowerCase();
