@@ -13,11 +13,25 @@ function ping(){
 	setTimeout("ping()",1000*60*5);
 }
 
-/*if (window.webkitNotifications.checkPermission()!=0){
-	window.webkitNotifications.requestPermission();
-}*/
+function modifyPermissionsIndicator(){
+	if (window.webkitNotifications.checkPermission()==0){
+		$('#notificationsIndicator').attr('class','icon-globe').removeAttr('style');
+	}else{
+		$('#notificationsIndicator').attr('class','icon-globe').attr('style','opacity: .5;');
+	}
+}
+
+modifyPermissionsIndicator();
 
 //<a href="#" onMouseOver="var icon=document.getElementById('pIcon');icon.className='icon-pencil icon-white';icon.style.opacity=.5" onMouseOut="var icon=document.getElementById('pIcon');icon.className='icon-pencil';icon.style.opacity=1" onClick="doEditNavBar()"><i id="pIcon" class="icon-pencil"></i></a>
+
+function setBrowserNotify(){
+	if (window.webkitNotifications.checkPermission()!=0){
+		window.webkitNotifications.requestPermission(modifyPermissionsIndicator);
+	}else if(window.webkitNotifications.checkPermission()==0){
+		$('#notificationModal').modal();
+	}
+}
 
 function toggleThumb(e){
 	$(e).parents('blockquote').children('ul.thumbnails').toggle(500);
@@ -241,11 +255,17 @@ now.newPost=function(post,tags){
 		
 		$('a.thumbnail').slimbox();
 	}
-	//window.webkitNotifications.createNotification(null,'New Post','This should be the post body');
+	
+	if (window.webkitNotifications.checkPermission()==0){
+		window.webkitNotifications.createNotification('/favicon.ico','New post','Someone posted something new... Check it out.').show();
+	}
 }
 
 now.newComment=function(post_id,comment){
 	$(comment).hide().prependTo('#comments-'+post_id).slideDown("slow");
+	var val=$('#comment-'+post_id+'-count').html();
+	val++;
+	$('#comment-'+post_id+'-count').html(val);
 	
 	$('a.thumbnail').slimbox();
 }

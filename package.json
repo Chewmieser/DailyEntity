@@ -7,6 +7,7 @@
 		"now": "0.8.x",
 		"pg": "0.8.x",
 		"MD5": "1.0.x",
+		"nodetime": "0.2.x",
 		"connect-heroku-redis": "0.1.x"
 	},
 	"engines": {

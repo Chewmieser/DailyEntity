@@ -3,6 +3,12 @@
 // Codename: Chocolate Chip Cheesecake
 // 7/2012
 
+// Profiling support
+require('nodetime').profile({
+	accountKey: '0b3cbcf57ce74ecfaf177a6e6253b583e104bc4d', 
+	appName: 'DailyEntity'
+});
+
 var versionNumber="1.0";
 var codeName="Chocolate Chip Cheesecake";
 
@@ -670,7 +676,7 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 
 app.get('/version',function(req,res){
 	res.end("DailyEntity Version "+versionNumber+" - "+codeName);
-})
+});
 
 app.get('*',function(req,res){
 	// User is probably requesting a static file... This should be trucked over to a static file provider or something...
