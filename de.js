@@ -217,6 +217,7 @@ function sendTagPage(clientId){
 	var partials={
 		header: templates.header,
 		content: "",
+		user_data: "{}"
 	}
 	partials.content+=templates.postBox;
 	
@@ -240,6 +241,7 @@ function sendTagPage(clientId){
 	}
 	
 	if (global.client[clientId].request.session.userId!=undefined){
+		partials.user_data="{user_name: '"+global.client[clientId].request.session.username+"', user_id: '"+global.client[clientId].request.session.userId+"'}";
 		p.account_menu="<li><a href='#' onClick='showProfilePage()'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout();'>Sign out</a></li>";
 		v.user_name=global.client[clientId].request.session.username;
 	}
@@ -258,7 +260,9 @@ function sendTagPage(clientId){
 			var v={
 				post_id: global.client[clientId].page_data.posts[i].post_id,
 				avatar_url: global.client[clientId].page_data.posts[i].avatar_url,
-				user_name: global.client[clientId].page_data.posts[i].user_name
+				user_name: global.client[clientId].page_data.posts[i].user_name,
+				user_id: global.client[clientId].page_data.posts[i].user_id,
+				total_comments: global.client[clientId].page_data.posts[i].comments.length
 			}
 			
 			var p={
@@ -283,7 +287,9 @@ function sendTagPage(clientId){
 			for (ii in global.client[clientId].page_data.posts[i].comments){
 				var vv={
 					user_name: global.client[clientId].page_data.posts[i].comments[ii].user_name,
-					avatar_url: global.client[clientId].page_data.posts[i].comments[ii].avatar_url
+					avatar_url: global.client[clientId].page_data.posts[i].comments[ii].avatar_url,
+					user_id: global.client[clientId].page_data.posts[i].comments[ii].user_id,
+					comment_id: global.client[clientId].page_data.posts[i].comments[ii].id
 				}
 				
 				var pp={

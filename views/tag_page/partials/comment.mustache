@@ -3,9 +3,12 @@
 	<div class="span10">
 		<blockquote class="pull-right span12">
 			<p>{{>comment}}</p>
+			<p class="pull-right" style="margin-right:10px;">
+				<i id="edit-{{post_id}}-icon" class="icon-pencil hidden" onClick="doEdit(1,{{comment_id}})"></i>&nbsp;
+			</p>
 		</blockquote>
 	</div>
 	<div class="span1" style="text-align:center;">
-		<img src="{{avatar_url}}" style="width:48px;height:48px;" /> <h6>{{user_name}}</h6>
+		<img src="{{avatar_url}}" style="width:48px;height:48px;" /> <span id="user-{{user_id}}"><small>{{user_name}}</small></span>
 	</div>
 </div>
