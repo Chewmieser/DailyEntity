@@ -279,7 +279,7 @@ function sendTagPage(clientId){
 
 				ii++
 
-				p.post_content+='<br><br><small>Attachments <sup><span class="badge">'+ii+'</span></sup></small><p><ul class="thumbnails">';
+				p.post_content+='<br><br><small>Attachments <sup><span class="badge" onClick="toggleThumb(this);">'+ii+'</span></sup></small><p><ul class="thumbnails" style="display: none;">';
 				p.post_content+=tmp;
 				p.post_content+="</ul></p>";
 			}
@@ -305,7 +305,7 @@ function sendTagPage(clientId){
 
 					iii++;
 
-					pp.comment+='<br><br><small>Attachments <sup><span class="badge">'+iii+'</span></sup></small><p><ul class="thumbnails">';
+					pp.comment+='<br><br><small>Attachments <sup><span class="badge" onClick="toggleThumb(this);">'+iii+'</span></sup></small><p><ul class="thumbnails" style="display: none;">';
 					pp.comment+=tmp;
 					pp.comment+="</ul></p>";
 				}
@@ -613,7 +613,7 @@ everyone.now.postMessage=function(content,tags,attachments){
 		
 		i++
 		
-		post.partials.post_content+='<br><br><small>Attachments <sup><span class="badge">'+i+'</span></sup></small><p><ul class="thumbnails">';
+		post.partials.post_content+='<br><br><small>Attachments <sup><span class="badge" onClick="toggleThumb(this);">'+i+'</span></sup></small><p><ul class="thumbnails" style="display: none;">';
 		post.partials.post_content+=tmp;
 		post.partials.post_content+="</ul></p>";
 	}
@@ -656,7 +656,7 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 		
 		i++;
 		
-		comment.partials.comment+='<br><br><small>Attachments <sup><span class="badge">'+i+'</span></sup></small><p><ul class="thumbnails">';
+		comment.partials.comment+='<br><br><small>Attachments <sup><span class="badge"onClick=" toggleThumb(this);">'+i+'</span></sup></small><p><ul class="thumbnails" style="display: none;">';
 		comment.partials.comment+=tmp;
 		comment.partials.comment+="</ul></p>";
 	}
@@ -681,6 +681,5 @@ app.get('*',function(req,res){
 		}
 	}catch (e){
 		res.send(404);
-		res.end();
 	}
 });

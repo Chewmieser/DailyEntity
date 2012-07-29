@@ -19,6 +19,10 @@ function ping(){
 
 //<a href="#" onMouseOver="var icon=document.getElementById('pIcon');icon.className='icon-pencil icon-white';icon.style.opacity=.5" onMouseOut="var icon=document.getElementById('pIcon');icon.className='icon-pencil';icon.style.opacity=1" onClick="doEditNavBar()"><i id="pIcon" class="icon-pencil"></i></a>
 
+function toggleThumb(e){
+	$(e).parents('blockquote').children('ul.thumbnails').toggle(500);
+}
+
 function doEditNavBar(){
 	// Navlink delete mode
 	$('#navlinks li a').not('#navLinkModify a').attr('style','color:#b94a48;');
