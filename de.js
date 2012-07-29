@@ -25,9 +25,9 @@ app.use(express.logger('dev'));
 app.use(express.cookieParser());
 
 // Development session store !!!----!!!
-/*var MemoryStore=express.session.MemoryStore;
-var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
-app.use(express.session({secret: "de123dezxc", store: sessionStore}));*/
+//var MemoryStore=express.session.MemoryStore;
+//var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
+//app.use(express.session({secret: "de123dezxc", store: sessionStore}));
 
 // Production session store !!!----!!!
 var hredis=require('connect-heroku-redis')(express);
@@ -270,7 +270,7 @@ function sendTagPage(clientId){
 				// We've got attachments. Modify the post content.
 				var tmp="";
 				for (ii in global.client[clientId].page_data.posts[i].attachments){
-					tmp+='<li class="span2"><a href="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" class="thumbnail" rel="lightbox"><img src="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" /></a></li>';
+					tmp+='<li class="span2"><a href="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" class="thumbnail" rel="lightbox"><img src="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" style="max-height:100px;" /></a></li>';
 				}
 
 				ii++
@@ -294,7 +294,7 @@ function sendTagPage(clientId){
 					// We've got attachments. Modify the post content.
 					var tmp="";
 					for (iii in global.client[clientId].page_data.posts[i].comments[ii].attachments){
-						tmp+='<li class="span2"><a href="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" class="thumbnail" rel="lightbox"><img src="'+global.client[clientId].page_data.posts[i].comments[ii].attachments[iii]+'" /></a></li>';
+						tmp+='<li class="span2"><a href="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" class="thumbnail" rel="lightbox"><img src="'+global.client[clientId].page_data.posts[i].comments[ii].attachments[iii]+'" style="max-height:100px;" /></a></li>';
 					}
 
 					iii++;
@@ -602,7 +602,7 @@ everyone.now.postMessage=function(content,tags,attachments){
 		// We've got attachments. Modify the post content.
 		var tmp="";
 		for (i in attachments){
-			tmp+='<li class="span2"><a href="'+attachments[i]+'" class="thumbnail" rel="lightbox"><img src="'+attachments[i]+'" /></a></li>';
+			tmp+='<li class="span2"><a href="'+attachments[i]+'" class="thumbnail" rel="lightbox"><img src="'+attachments[i]+'" style="max-height:100px;" /></a></li>';
 		}
 		
 		i++
@@ -645,7 +645,7 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 		// We've got attachments. Modify the post content.
 		var tmp="";
 		for (i in attachments){
-			tmp+='<li class="span2"><a href="'+attachments[i]+'" class="thumbnail" rel="lightbox"><img src="'+attachments[i]+'" /></a></li>';
+			tmp+='<li class="span2"><a href="'+attachments[i]+'" class="thumbnail" rel="lightbox"><img src="'+attachments[i]+'" style="max-height:100px;" /></a></li>';
 		}
 		
 		i++;
