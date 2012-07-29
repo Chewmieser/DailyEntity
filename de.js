@@ -56,6 +56,9 @@ var everyone=nowjs.initialize(app,{socketio: {"transports": ["xhr-polling"], "po
 const DEBUG_INFO=0, DEBUG_WARN=1, DEBUG_ERROR=2;
 global.client=[];
 
+// Keep templates in memory
+var templates={};
+
 // Handle debug messages
 function debug(type,message){
 	if (type==DEBUG_INFO){
@@ -204,15 +207,18 @@ function loadTagPage(clientId){
 
 // Send the tag page to the user
 function sendTagPage(clientId){
-	// Load all templates
-	var templates={
-		main: fs.readFileSync('./views/tag_page/index.html','utf8'),
-		header: fs.readFileSync("./views/tag_page/partials/header.mustache","utf8"),
-		postBox: fs.readFileSync("./views/tag_page/partials/postbox.mustache","utf8"),
-		sideBar: fs.readFileSync("./views/tag_page/partials/sidebar.mustache","utf8"),
-		navBar: fs.readFileSync('./views/tag_page/partials/navbar.mustache','utf8'),
-		post: fs.readFileSync('./views/tag_page/partials/post.mustache','utf8'),
-		comment: fs.readFileSync('./views/tag_page/partials/comment.mustache','utf8')
+	// Load all templates... Only if they need to be loaded. Let's not tax the filesystem otherwise.
+	if (templates.main==undefined){
+		console.log("Loading tag page templates");
+		templates={
+			main: fs.readFileSync('./views/tag_page/index.html','utf8'),
+			header: fs.readFileSync("./views/tag_page/partials/header.mustache","utf8"),
+			postBox: fs.readFileSync("./views/tag_page/partials/postbox.mustache","utf8"),
+			sideBar: fs.readFileSync("./views/tag_page/partials/sidebar.mustache","utf8"),
+			navBar: fs.readFileSync('./views/tag_page/partials/navbar.mustache','utf8'),
+			post: fs.readFileSync('./views/tag_page/partials/post.mustache','utf8'),
+			comment: fs.readFileSync('./views/tag_page/partials/comment.mustache','utf8')
+		}
 	}
 	
 	var view={
@@ -607,7 +613,7 @@ everyone.now.postMessage=function(content,tags,attachments){
 		
 		userId: this.user.session.userId,
 		tags: tags,
-		template: fs.readFileSync('./views/tag_page/partials/post.mustache','utf8')
+		template: templates.post
 	}
 	
 	if (attachments.length>0){
@@ -650,7 +656,7 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 		
 		userId: this.user.session.userId,
 		tags: tags,
-		template: fs.readFileSync('./views/tag_page/partials/comment.mustache','utf8')
+		template: templates.comment
 	}
 	
 	if (attachments.length>0){
