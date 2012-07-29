@@ -270,7 +270,7 @@ function sendTagPage(clientId){
 				// We've got attachments. Modify the post content.
 				var tmp="";
 				for (ii in global.client[clientId].page_data.posts[i].attachments){
-					tmp+='<li class="span2"><div class="thumbnail"><img src="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" /></div></li>';
+					tmp+='<li class="span2"><a href="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" class="thumbnail" rel="lightbox"><img src="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" /></a></li>';
 				}
 
 				ii++
@@ -294,7 +294,7 @@ function sendTagPage(clientId){
 					// We've got attachments. Modify the post content.
 					var tmp="";
 					for (iii in global.client[clientId].page_data.posts[i].comments[ii].attachments){
-						tmp+='<li class="span2"><div class="thumbnail"><img src="'+global.client[clientId].page_data.posts[i].comments[ii].attachments[iii]+'" /></div></li>';
+						tmp+='<li class="span2"><a href="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" class="thumbnail" rel="lightbox"><img src="'+global.client[clientId].page_data.posts[i].comments[ii].attachments[iii]+'" /></a></li>';
 					}
 
 					iii++;
@@ -602,7 +602,7 @@ everyone.now.postMessage=function(content,tags,attachments){
 		// We've got attachments. Modify the post content.
 		var tmp="";
 		for (i in attachments){
-			tmp+='<li class="span2"><div class="thumbnail"><img src="'+attachments[i]+'" /></div></li>';
+			tmp+='<li class="span2"><a href="'+attachments[i]+'" class="thumbnail" rel="lightbox"><img src="'+attachments[i]+'" /></a></li>';
 		}
 		
 		i++
@@ -645,7 +645,7 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 		// We've got attachments. Modify the post content.
 		var tmp="";
 		for (i in attachments){
-			tmp+='<li class="span2"><div class="thumbnail"><img src="'+attachments[i]+'" /></div></li>';
+			tmp+='<li class="span2"><a href="'+attachments[i]+'" class="thumbnail" rel="lightbox"><img src="'+attachments[i]+'" /></a></li>';
 		}
 		
 		i++;

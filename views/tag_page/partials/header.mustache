@@ -1,6 +1,7 @@
 <!-- Load bootstrap CSS -->
 <link href="../includes/bootstrap/css/bootstrap.css" rel="stylesheet">
 <link href="../includes/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+<link href="../includes/slimbox/css/slimbox2.css" rel="stylesheet">
 
 <script type="text/javascript" src="/nowjs/now.js"></script>
 
@@ -251,12 +252,16 @@ now.commentResponse=function(id,post_id){
 now.newPost=function(post,tags){
 	if (tags.indexOf(tagPage)!=-1){
 		$(post).hide().prependTo('#postContainer').slideDown("slow");
+		
+		$('a.thumbnail').slimbox();
 	}
 	//window.webkitNotifications.createNotification(null,'New Post','This should be the post body');
 }
 
 now.newComment=function(post_id,comment){
 	$(comment).hide().prependTo('#comments-'+post_id).slideDown("slow");
+	
+	$('a.thumbnail').slimbox();
 }
 
 now.loginResponse=function(l,u){
