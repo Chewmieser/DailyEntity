@@ -684,10 +684,14 @@ app.get('/version',function(req,res){
 	res.end("DailyEntity Version "+versionNumber+" - "+codeName);
 });
 
+// Static files
+app.use("/includes", express.static(__dirname + '/includes'));
+
 app.get('*',function(req,res){
 	// User is probably requesting a static file... This should be trucked over to a static file provider or something...
 	try{
 		if (fs.lstatSync("."+req.path).isFile()){
+			console.log("Fetching static file "+req.path);
 			res.contentType(path.extname(req.path));
 			res.end(fs.readFileSync("."+req.path));
 		}
