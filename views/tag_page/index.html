@@ -5,7 +5,46 @@
 	{{>header}}
 </head>
 <body onLoad="doStuff();">
-		
+	
+	<div class="modal fade hide" style="display: none;" id="aboutModal">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">x</button>
+			<h3>About DailyEntity</h3>
+		</div>
+		<div class="modal-body">
+			<p>DailyEntity is... Well this is where the about page should go... But it's not done... So... Yeah...</p>
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal">Close</a>
+		</div>
+	</div>
+	
+	<div class="modal fade hide" style="display: none;" id="faqModal">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">x</button>
+			<h3>FAQ</h3>
+		</div>
+		<div class="modal-body">
+			<p>This'll probably be where we talk about how to use the site. Eventually.</p>
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal">Close</a>
+		</div>
+	</div>
+	
+	<div class="modal fade hide" style="display: none;" id="contactModal">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal">x</button>
+			<h3>Contact</h3>
+		</div>
+		<div class="modal-body">
+			<p>There is no contact information. You're on your own, buddy.</p>
+		</div>
+		<div class="modal-footer">
+			<a href="#" class="btn" data-dismiss="modal">Close</a>
+		</div>
+	</div>	
+	
 	<div class="container" style="background-color:white;border:1px solid #BBB;box-shadow:0 1px 2px rgba(0, 0, 0, .075);padding-top:20px;padding-bottom:20px;">
 	
 	{{>nav}}

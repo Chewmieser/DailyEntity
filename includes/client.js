@@ -75,7 +75,11 @@ function logout(){
 }
 
 function doComment(post_id){
-	console.log(post_id);
+	if (!$('#comments-'+post_id).is(":visible")){
+		$('#comments-'+post_id+'-icon').toggleClass('icon-white');
+		$('#comments-'+post_id).toggle(500);
+	}
+	
 	this.post_id=post_id;
 	$('#reply-'+post_id+'-icon').toggleClass('icon-share-alt').toggleClass('icon-remove').attr('onClick','removeCommentBox('+post_id+')');
 	$(commentEditSource).hide().prependTo('#comments-'+post_id).slideDown("slow",function(){
