@@ -4,10 +4,10 @@
 // 7/2012
 
 // Profiling support
-require('nodetime').profile({
+/*require('nodetime').profile({
 	accountKey: '0b3cbcf57ce74ecfaf177a6e6253b583e104bc4d', 
 	appName: 'DailyEntity'
-});
+});*/
 
 var versionNumber="1.0";
 var codeName="Chocolate Chip Cheesecake";
@@ -27,8 +27,9 @@ var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhos
 client.connect();
 
 // app.configure options
-app.use(express.logger('dev'));
+app.use(express.logger('tiny'));
 app.use(express.cookieParser());
+app.use("/includes", express.static(__dirname + '/includes',{maxAge: 86400000}));
 
 // Development session store !!!----!!!
 //var MemoryStore=express.session.MemoryStore;
@@ -684,14 +685,10 @@ app.get('/version',function(req,res){
 	res.end("DailyEntity Version "+versionNumber+" - "+codeName);
 });
 
-// Static files
-app.use("/includes", express.static(__dirname + '/includes'));
-
 app.get('*',function(req,res){
 	// User is probably requesting a static file... This should be trucked over to a static file provider or something...
 	try{
 		if (fs.lstatSync("."+req.path).isFile()){
-			console.log("Fetching static file "+req.path);
 			res.contentType(path.extname(req.path));
 			res.end(fs.readFileSync("."+req.path));
 		}
