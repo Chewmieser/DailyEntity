@@ -529,6 +529,8 @@ everyone.now.loadNavBar=function(){
 			
 			client.end();
 			
+			console.log(this.tags);
+			
 			resolveTagsById(this.tags,function(ta){
 				this.now.loadNavBarTags(ta);
 			}.bind(this));
