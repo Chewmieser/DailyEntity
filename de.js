@@ -113,6 +113,7 @@ function loadTagPage(clientId){
 			// Send the tag page
 			client.query("INSERT INTO tags (tag_name, tag_description) VALUES($1,'')",[tag],function(err,result){
 				debug(DEBUG_INFO,"Tag '"+tag+"' created");
+				client.end();
 				sendTagPage(this.clientId);
 			}.bind(this)); // Pass context of 'this' into function
 		}else{
@@ -206,6 +207,7 @@ function loadTagPage(clientId){
 					}
 				}else{
 					// No relevant posts, send the tag page
+					client.end();
 					sendTagPage(this.clientId);
 				}
 			}.bind(this)); // Pass context of 'this' into function
