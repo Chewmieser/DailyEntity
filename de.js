@@ -367,12 +367,22 @@ function postContent(user_id,content,tags,attachments,callback){
 					if (this.tagTotal==0){
 						// Save post attachments now
 						if (this.attachments.length>0){
+							var attach=this.attachments.length;
+							
 							for (ii in this.attachments){
-								client.query("INSERT INTO attachments (post_id, attachment_url) VALUES($1, $2)",[this.postId, this.attachments[ii]],function(err,result){});
+								client.query("INSERT INTO attachments (post_id, attachment_url) VALUES($1, $2)",[this.postId, this.attachments[ii]],function(err,result){
+									attach--;
+									if (attach==0){
+										client.end();
+									}
+								});
 							}
 						}
 						
-						client.end();
+						if (attach==undefined){
+							client.end();
+						}
+						
 						callback(this.postId);
 					}
 				}.bind(this));
@@ -402,12 +412,22 @@ function postComment(user_id,post_id,content,tags,attachments,callback){
 					this.tagTotal--;
 					if (this.tagTotal==0){
 						if (this.attachments.length>0){
+							var attach=this.attachments.length;
+							
 							for (ii in this.attachments){
-								client.query("INSERT INTO attachments (comment_id, attachment_url) VALUES($1, $2)",[this.comment_id, this.attachments[ii]],function(err,result){});
+								client.query("INSERT INTO attachments (comment_id, attachment_url) VALUES($1, $2)",[this.comment_id, this.attachments[ii]],function(err,result){
+									attach--;
+									if (attach==0){
+										client.end();
+									}
+								});
 							}
 						}
 						
-						client.end();
+						if (attach==undefined){
+							client.end();
+						}
+						
 						callback(this.post_id);
 					}
 				}.bind(this));
@@ -528,8 +548,6 @@ everyone.now.loadNavBar=function(){
 			}
 			
 			client.end();
-			
-			console.log(this.tags);
 			
 			resolveTagsById(this.tags,function(ta){
 				this.now.loadNavBarTags(ta);
