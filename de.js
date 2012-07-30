@@ -545,8 +545,9 @@ everyone.now.removeNavLink=function(tagName){
 		// Conect to Postgres
 		var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
 		client.connect();
-		client.query("DELETE FROM navlinks WHERE tag_id=$1 AND user_id=$2",[tagIds[0],this.user.session.userId],function(err,result){});
-		client.end();
+		client.query("DELETE FROM navlinks WHERE tag_id=$1 AND user_id=$2",[tagIds[0],this.user.session.userId],function(err,result){
+			client.end();
+		});
 	}.bind(this));
 }
 
@@ -560,8 +561,9 @@ everyone.now.saveNavLink=function(tagName){
 		// Conect to Postgres
 		var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
 		client.connect();
-		client.query("INSERT INTO navlinks (tag_id, user_id) VALUES($1,$2)",[tagIds[0],this.user.session.userId],function(err,result){});
-		client.end();
+		client.query("INSERT INTO navlinks (tag_id, user_id) VALUES($1,$2)",[tagIds[0],this.user.session.userId],function(err,result){
+			client.end();
+		});
 	}.bind(this));
 }
 
