@@ -632,9 +632,9 @@ everyone.now.ping=function(){
 	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
 	client.connect();
 	
-	client.query("UPDATE users SET last_active=now() WHERE user_id=$1",[this.user.session.userId],function(){});
-	
-	client.end();
+	client.query("UPDATE users SET last_active=now() WHERE user_id=$1",[this.user.session.userId],function(){
+		client.end();
+	});
 	
 	this.now.pong();
 }
