@@ -4,10 +4,10 @@
 // 7/2012
 
 // Profiling support
-/*require('nodetime').profile({
+require('nodetime').profile({
 	accountKey: '0b3cbcf57ce74ecfaf177a6e6253b583e104bc4d', 
 	appName: 'DailyEntity'
-});*/
+});
 
 var versionNumber="1.0";
 var codeName="Chocolate Chip Cheesecake";
@@ -21,15 +21,17 @@ var path=require("path");
 var nowjs=require("now");
 var md5=require("MD5");
 
-// Create server, connect to MySQL
+// Create server
 var app=express.createServer();
-var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
-client.connect();
+//var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+//client.connect();
 
 // app.configure options
 app.use(express.logger('tiny'));
 app.use(express.cookieParser());
+app.use(express.staticCache());
 app.use("/includes", express.static(__dirname + '/includes',{maxAge: 86400000}));
+app.use(express.compress());
 
 // Development session store !!!----!!!
 //var MemoryStore=express.session.MemoryStore;
@@ -93,6 +95,10 @@ function killClient(clientId){
 
 // Process a tag page request
 function loadTagPage(clientId){
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	// Grab tag to load
 	var tag=global.client[clientId].page_data.params[0];
 	global.client[clientId].page_data.tag_data.name=tag;
@@ -192,6 +198,7 @@ function loadTagPage(clientId){
 								
 								global.client[this.clientId].page_data.total_posts--;
 								if (global.client[this.clientId].page_data.total_posts==0){
+									client.end();
 									sendTagPage(this.clientId);
 								}
 							}.bind(tmp));
@@ -339,6 +346,11 @@ function sendTagPage(clientId){
 }
 
 function postContent(user_id,content,tags,attachments,callback){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	this.tags=tags;
 	this.attachments=attachments;
 	client.query("INSERT INTO posts (post, user_id, timestamp) VALUES($1,$2,now()) RETURNING post_id",[content,user_id],function(err,result){
@@ -358,6 +370,7 @@ function postContent(user_id,content,tags,attachments,callback){
 							}
 						}
 						
+						client.end();
 						callback(this.postId);
 					}
 				}.bind(this));
@@ -367,6 +380,11 @@ function postContent(user_id,content,tags,attachments,callback){
 }
 
 function postComment(user_id,post_id,content,tags,attachments,callback){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	// Insert post
 	this.post_id=post_id;
 	this.tags=tags;
@@ -387,6 +405,7 @@ function postComment(user_id,post_id,content,tags,attachments,callback){
 							}
 						}
 						
+						client.end();
 						callback(this.post_id);
 					}
 				}.bind(this));
@@ -396,6 +415,11 @@ function postComment(user_id,post_id,content,tags,attachments,callback){
 }
 
 function resolveTags(tags,callback){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	this.tags=tags;
 	this.resolved=[];
 	this.totalTags=tags.length;
@@ -408,6 +432,7 @@ function resolveTags(tags,callback){
 			this.totalTags--;
 
 			if (this.totalTags==0){
+				client.end();
 				callback(this.resolved);
 			}
 		}.bind(this));
@@ -415,6 +440,11 @@ function resolveTags(tags,callback){
 }
 
 function resolveTagsById(tags,callback){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	this.tags=tags;
 	this.resolved=[];
 	this.totalTags=tags.length;
@@ -426,6 +456,7 @@ function resolveTagsById(tags,callback){
 			this.totalTags--;
 
 			if (this.totalTags==0){
+				client.end();
 				callback(this.resolved);
 			}
 		}.bind(this));
@@ -433,6 +464,11 @@ function resolveTagsById(tags,callback){
 }
 
 function generatePopularTags(callback){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	this.tags=[];
 	client.query("SELECT post_tags.post_tags_id, tags.tag_name FROM tags INNER JOIN post_tags ON tags.tag_id = post_tags.tag_id;",function(err,result){
 		for (i in result.rows){
@@ -444,6 +480,7 @@ function generatePopularTags(callback){
 		}
 		
 		this.tags.sort();
+		client.end();
 		callback(Object.keys(this.tags));
 	}.bind(this));
 }
@@ -468,17 +505,28 @@ everyone.now.modifyProfile=function(avatar_url){
 	this.user.session.avatar_url=avatar_url;
 	this.user.session.save();
 	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
 	client.query("UPDATE users SET avatar_url=$1 WHERE user_id=$2",[avatar_url,this.user.session.userId],function(){});
+	client.end();
 }
 
 everyone.now.loadNavBar=function(){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	this.tags=[];
 	client.query("SELECT * FROM navlinks WHERE user_id=$1",[this.user.session.userId],function(err,result){
 		if (Object.keys(result.rows).length>0){
 			for (i in result.rows){
 				this.tags.push(result.rows[i].tag_id);
 			}
-		
+			
+			client.end();
+			
 			resolveTagsById(this.tags,function(ta){
 				this.now.loadNavBarTags(ta);
 			}.bind(this));
@@ -492,7 +540,11 @@ everyone.now.removeNavLink=function(tagName){
 	}
 	
 	resolveTags([tagName],function(tagIds){
+		// Conect to Postgres
+		var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+		client.connect();
 		client.query("DELETE FROM navlinks WHERE tag_id=$1 AND user_id=$2",[tagIds[0],this.user.session.userId],function(err,result){});
+		client.end();
 	}.bind(this));
 }
 
@@ -503,7 +555,11 @@ everyone.now.saveNavLink=function(tagName){
 	}
 	
 	resolveTags([tagName],function(tagIds){
+		// Conect to Postgres
+		var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+		client.connect();
 		client.query("INSERT INTO navlinks (tag_id, user_id) VALUES($1,$2)",[tagIds[0],this.user.session.userId],function(err,result){});
+		client.end();
 	}.bind(this));
 }
 
@@ -514,8 +570,16 @@ everyone.now.getPopularTags=function(){
 }
 
 everyone.now.login=function(username,password){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	username=username.toLowerCase();
 	client.query("SELECT * FROM users WHERE name=$1 AND password=$2",[username,md5(passHash.before+password+passHash.after)],function(err,result){
+		
+		client.end();
+		
 		var rows=result.rows;
 		
 		if (Object.keys(rows).length==0){
@@ -535,7 +599,15 @@ everyone.now.login=function(username,password){
 }
 
 everyone.now.requestActiveUsers=function(){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	client.query("SELECT name FROM users WHERE age(now(),last_active) < INTERVAL '10 minutes'",function(err,result){
+		
+		client.end();
+		
 		if (Object.keys(result.rows).length>0){
 			var tmp=[];
 			for (i in result.rows){
@@ -554,12 +626,24 @@ everyone.now.ping=function(){
 		return;
 	}
 	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	client.query("UPDATE users SET last_active=now() WHERE user_id=$1",[this.user.session.userId],function(){});
+	
+	client.end();
 	
 	this.now.pong();
 }
 
 everyone.now.signup=function(username,password,email){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
+	
 	this.username=username.toLowerCase();
 	this.email=email.toLowerCase();
 	this.password=password;
@@ -580,11 +664,13 @@ everyone.now.signup=function(username,password,email){
 					email: this.email
 				}
 
+				client.end();
 				this.now.loginResponse(true,userObject);
 				this.user.session.save();
 			}.bind(this));
 		}else{
 			// Username already exists :(
+			client.end();
 			this.now.signupError(1);
 		}
 	}.bind(this));
