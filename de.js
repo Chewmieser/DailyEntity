@@ -530,8 +530,9 @@ everyone.now.modifyProfile=function(avatar_url){
 	// Conect to Postgres
 	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
 	client.connect();
-	client.query("UPDATE users SET avatar_url=$1 WHERE user_id=$2",[avatar_url,this.user.session.userId],function(){});
-	client.end();
+	client.query("UPDATE users SET avatar_url=$1 WHERE user_id=$2",[avatar_url,this.user.session.userId],function(){
+		client.end();
+	});
 }
 
 everyone.now.loadNavBar=function(){
