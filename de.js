@@ -23,8 +23,8 @@ var md5=require("MD5");
 
 // Create server
 var app=express.createServer();
-var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
-client.connect();
+//var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+//client.connect();
 
 // app.configure options
 app.use(express.logger('tiny'));
@@ -88,28 +88,6 @@ function createClient(req,res){
 	}) - 1;
 }
 
-function query(query,args,callback){
-	// Try to create a client
-	var c=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
-	c.connect(function(err){
-		if (err!=null){
-			// Our client failed. Fallback to our main one
-			client.query(query,args,function(err,result){
-				console.log("Stale client used");
-				client.end();
-				callback(err,result);
-			});
-		}else{
-			// Our client is fine, use it
-			c.query(query,args,function(err,result){
-				console.log("New client used");
-				c.end();
-				callback(err,result);
-			});
-		}
-	});
-}
-
 // When we finish processing the client, remove them from the system
 function killClient(clientId){
 	global.client.splice(clientId,1);
@@ -117,6 +95,10 @@ function killClient(clientId){
 
 // Process a tag page request
 function loadTagPage(clientId){
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	// Grab tag to load
 	var tag=global.client[clientId].page_data.params[0];
 	global.client[clientId].page_data.tag_data.name=tag;
@@ -124,13 +106,14 @@ function loadTagPage(clientId){
 	debug(DEBUG_INFO,"Client '"+clientId+"' requesting tag page '"+tag+"'");
 	
 	// Find the tag ID
-	query("SELECT tag_id,tag_description FROM tags WHERE tag_name=$1",[tag],function(err,result){
+	client.query("SELECT tag_id,tag_description FROM tags WHERE tag_name=$1",[tag],function(err,result){
 		// If there is no tag ID, create the tag
 		var rows=result.rows;
 		if (Object.keys(rows).length==0){
 			// Send the tag page
-			query("INSERT INTO tags (tag_name, tag_description) VALUES($1,'')",[tag],function(err,result){
+			client.query("INSERT INTO tags (tag_name, tag_description) VALUES($1,'')",[tag],function(err,result){
 				debug(DEBUG_INFO,"Tag '"+tag+"' created");
+				client.end();
 				sendTagPage(this.clientId);
 			}.bind(this)); // Pass context of 'this' into function
 		}else{
@@ -141,13 +124,13 @@ function loadTagPage(clientId){
 			global.client[this.clientId].page_data.tag_data.description=rows[0].tag_description;
 
 			// Find relevant post IDs
-			query("SELECT post_id FROM post_tags WHERE tag_id="+rows[0].tag_id+" ORDER BY post_id DESC",[],function(err,result){
+			client.query("SELECT post_id FROM post_tags WHERE tag_id="+rows[0].tag_id+" ORDER BY post_id DESC",function(err,result){
 				var rows=result.rows;
 				// If we have posts available, grab them
 				if (Object.keys(rows).length>0){
 					for (var r in Object.keys(rows)){
 						global.client[this.clientId].page_data.total_posts++;
-						query("SELECT posts.post, posts.user_id, posts.post_id, users.name, users.avatar_url, attachments.attachment_url FROM posts LEFT JOIN attachments ON posts.post_id=attachments.post_id LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id="+rows[r].post_id,[],function(err,result){
+						client.query("SELECT posts.post, posts.user_id, posts.post_id, users.name, users.avatar_url, attachments.attachment_url FROM posts LEFT JOIN attachments ON posts.post_id=attachments.post_id LEFT JOIN users ON posts.user_id=users.user_id WHERE posts.post_id="+rows[r].post_id,function(err,result){
 							var rows=result.rows;
 							var pid=global.client[this.clientId].page_data.posts.push({
 								post: rows[0].post,
@@ -172,7 +155,7 @@ function loadTagPage(clientId){
 								pid: pid
 							}
 							
-							query("SELECT comments.comment_id, comments.comment, comments.user_id, comments.post_id, comments.timestamp, attachments.attachment_url, users.name, users.avatar_url FROM comments LEFT JOIN attachments ON comments.comment_id=attachments.comment_id LEFT JOIN users ON comments.user_id=users.user_id WHERE comments.post_id="+rows[0].post_id+" ORDER BY comments.comment_id DESC",[],function(err,result){
+							client.query("SELECT comments.comment_id, comments.comment, comments.user_id, comments.post_id, comments.timestamp, attachments.attachment_url, users.name, users.avatar_url FROM comments LEFT JOIN attachments ON comments.comment_id=attachments.comment_id LEFT JOIN users ON comments.user_id=users.user_id WHERE comments.post_id="+rows[0].post_id+" ORDER BY comments.comment_id DESC",function(err,result){
 								var rows=result.rows;
 								var tmp=[];
 								
@@ -216,7 +199,7 @@ function loadTagPage(clientId){
 								
 								global.client[this.clientId].page_data.total_posts--;
 								if (global.client[this.clientId].page_data.total_posts==0){
-									
+									client.end();
 									sendTagPage(this.clientId);
 								}
 							}.bind(tmp));
@@ -224,7 +207,7 @@ function loadTagPage(clientId){
 					}
 				}else{
 					// No relevant posts, send the tag page
-					
+					client.end();
 					sendTagPage(this.clientId);
 				}
 			}.bind(this)); // Pass context of 'this' into function
@@ -365,15 +348,20 @@ function sendTagPage(clientId){
 }
 
 function postContent(user_id,content,tags,attachments,callback){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	this.tags=tags;
 	this.attachments=attachments;
-	query("INSERT INTO posts (post, user_id, timestamp) VALUES($1,$2,now()) RETURNING post_id",[content,user_id],function(err,result){
+	client.query("INSERT INTO posts (post, user_id, timestamp) VALUES($1,$2,now()) RETURNING post_id",[content,user_id],function(err,result){
 		this.postId=result.rows[0].post_id;
 		this.tagTotal=tags.length;
 		
 		resolveTags(this.tags,function(t){
 			for (i in t){
-				query("INSERT INTO post_tags (post_id, tag_id) VALUES($1,$2)",[this.postId,t[i]],function(err,result){
+				client.query("INSERT INTO post_tags (post_id, tag_id) VALUES($1,$2)",[this.postId,t[i]],function(err,result){
 					this.tagTotal--;
 
 					if (this.tagTotal==0){
@@ -382,17 +370,17 @@ function postContent(user_id,content,tags,attachments,callback){
 							var attach=this.attachments.length;
 							
 							for (ii in this.attachments){
-								query("INSERT INTO attachments (post_id, attachment_url) VALUES($1, $2)",[this.postId, this.attachments[ii]],function(err,result){
+								client.query("INSERT INTO attachments (post_id, attachment_url) VALUES($1, $2)",[this.postId, this.attachments[ii]],function(err,result){
 									attach--;
 									if (attach==0){
-										
+										client.end();
 									}
 								});
 							}
 						}
 						
 						if (attach==undefined){
-							
+							client.end();
 						}
 						
 						callback(this.postId);
@@ -405,17 +393,21 @@ function postContent(user_id,content,tags,attachments,callback){
 
 function postComment(user_id,post_id,content,tags,attachments,callback){
 	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	// Insert post
 	this.post_id=post_id;
 	this.tags=tags;
 	this.attachments=attachments;
-	query("INSERT INTO comments (comment,user_id,post_id,timestamp) VALUES($1,$2,$3,now()) RETURNING comment_id",[content,user_id,post_id],function(err,result){
+	client.query("INSERT INTO comments (comment,user_id,post_id,timestamp) VALUES($1,$2,$3,now()) RETURNING comment_id",[content,user_id,post_id],function(err,result){
 		// Find out what tags the post contains
 		this.comment_id=result.rows[0].comment_id;
 		resolveTags(this.tags,function(t){
 			this.tagTotal=t.length;
 			for (i in t){
-				query("SELECT modifyPostTags($1, $2)",[this.post_id,t[i]],function(err,result){
+				client.query("SELECT modifyPostTags($1, $2)",[this.post_id,t[i]],function(err,result){
 					// Tag already exists for post
 					this.tagTotal--;
 					if (this.tagTotal==0){
@@ -423,17 +415,17 @@ function postComment(user_id,post_id,content,tags,attachments,callback){
 							var attach=this.attachments.length;
 							
 							for (ii in this.attachments){
-								query("INSERT INTO attachments (comment_id, attachment_url) VALUES($1, $2)",[this.comment_id, this.attachments[ii]],function(err,result){
+								client.query("INSERT INTO attachments (comment_id, attachment_url) VALUES($1, $2)",[this.comment_id, this.attachments[ii]],function(err,result){
 									attach--;
 									if (attach==0){
-										
+										client.end();
 									}
 								});
 							}
 						}
 						
 						if (attach==undefined){
-							
+							client.end();
 						}
 						
 						callback(this.post_id);
@@ -445,19 +437,24 @@ function postComment(user_id,post_id,content,tags,attachments,callback){
 }
 
 function resolveTags(tags,callback){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	this.tags=tags;
 	this.resolved=[];
 	this.totalTags=tags.length;
 	
 	for (i in tags){
 		console.log(tags[i]);
-		query("SELECT findTag($1)",[tags[i]],function(err,result){
+		client.query("SELECT findTag($1)",[tags[i]],function(err,result){
 			if (err){ console.log(err); }
 			this.resolved.push(result.rows[0].findtag);
 			this.totalTags--;
 
 			if (this.totalTags==0){
-				
+				client.end();
 				callback(this.resolved);
 			}
 		}.bind(this));
@@ -465,18 +462,23 @@ function resolveTags(tags,callback){
 }
 
 function resolveTagsById(tags,callback){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	this.tags=tags;
 	this.resolved=[];
 	this.totalTags=tags.length;
 	
 	for (i in tags){
-		query("SELECT tag_name FROM tags WHERE tag_id=$1",[tags[i]],function(err,result){
+		client.query("SELECT tag_name FROM tags WHERE tag_id=$1",[tags[i]],function(err,result){
 			if (err){ console.log(err); }
 			this.resolved.push(result.rows[0].tag_name);
 			this.totalTags--;
 
 			if (this.totalTags==0){
-				
+				client.end();
 				callback(this.resolved);
 			}
 		}.bind(this));
@@ -484,8 +486,13 @@ function resolveTagsById(tags,callback){
 }
 
 function generatePopularTags(callback){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	this.tags=[];
-	query("SELECT post_tags.post_tags_id, tags.tag_name FROM tags INNER JOIN post_tags ON tags.tag_id = post_tags.tag_id",[],function(err,result){
+	client.query("SELECT post_tags.post_tags_id, tags.tag_name FROM tags INNER JOIN post_tags ON tags.tag_id = post_tags.tag_id;",function(err,result){
 		for (i in result.rows){
 			if (this.tags[result.rows[i].tag_name]==undefined){
 				this.tags[result.rows[i].tag_name]=1;
@@ -495,7 +502,7 @@ function generatePopularTags(callback){
 		}
 		
 		this.tags.sort();
-		
+		client.end();
 		callback(Object.keys(this.tags));
 	}.bind(this));
 }
@@ -522,18 +529,25 @@ everyone.now.modifyProfile=function(avatar_url){
 	
 	// Conect to Postgres
 	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
-	query("UPDATE users SET avatar_url=$1 WHERE user_id=$2",[avatar_url,this.user.session.userId],function(){});
+	client.connect();
+	client.query("UPDATE users SET avatar_url=$1 WHERE user_id=$2",[avatar_url,this.user.session.userId],function(){});
+	client.end();
 }
 
 everyone.now.loadNavBar=function(){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	this.tags=[];
-	query("SELECT * FROM navlinks WHERE user_id=$1",[this.user.session.userId],function(err,result){
+	client.query("SELECT * FROM navlinks WHERE user_id=$1",[this.user.session.userId],function(err,result){
 		if (Object.keys(result.rows).length>0){
 			for (i in result.rows){
 				this.tags.push(result.rows[i].tag_id);
 			}
 			
-			
+			client.end();
 			
 			resolveTagsById(this.tags,function(ta){
 				this.now.loadNavBarTags(ta);
@@ -550,7 +564,10 @@ everyone.now.removeNavLink=function(tagName){
 	resolveTags([tagName],function(tagIds){
 		// Conect to Postgres
 		var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
-		query("DELETE FROM navlinks WHERE tag_id=$1 AND user_id=$2",[tagIds[0],this.user.session.userId],function(err,result){});
+		client.connect();
+		client.query("DELETE FROM navlinks WHERE tag_id=$1 AND user_id=$2",[tagIds[0],this.user.session.userId],function(err,result){
+			client.end();
+		});
 	}.bind(this));
 }
 
@@ -563,7 +580,10 @@ everyone.now.saveNavLink=function(tagName){
 	resolveTags([tagName],function(tagIds){
 		// Conect to Postgres
 		var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
-		query("INSERT INTO navlinks (tag_id, user_id) VALUES($1,$2)",[tagIds[0],this.user.session.userId],function(err,result){});
+		client.connect();
+		client.query("INSERT INTO navlinks (tag_id, user_id) VALUES($1,$2)",[tagIds[0],this.user.session.userId],function(err,result){
+			client.end();
+		});
 	}.bind(this));
 }
 
@@ -574,10 +594,15 @@ everyone.now.getPopularTags=function(){
 }
 
 everyone.now.login=function(username,password){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
 	username=username.toLowerCase();
-	query("SELECT * FROM users WHERE name=$1 AND password=$2",[username,md5(passHash.before+password+passHash.after)],function(err,result){
+	client.query("SELECT * FROM users WHERE name=$1 AND password=$2",[username,md5(passHash.before+password+passHash.after)],function(err,result){
 		
-		
+		client.end();
 		
 		var rows=result.rows;
 		
@@ -598,9 +623,14 @@ everyone.now.login=function(username,password){
 }
 
 everyone.now.requestActiveUsers=function(){
-	query("SELECT name FROM users WHERE age(now(),last_active) < INTERVAL '10 minutes'",[],function(err,result){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
+	client.query("SELECT name FROM users WHERE age(now(),last_active) < INTERVAL '10 minutes'",function(err,result){
 		
-		
+		client.end();
 		
 		if (Object.keys(result.rows).length>0){
 			var tmp=[];
@@ -620,21 +650,33 @@ everyone.now.ping=function(){
 		return;
 	}
 	
-	query("UPDATE users SET last_active=now() WHERE user_id=$1",[this.user.session.userId],function(err,result){});
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
+	client.query("UPDATE users SET last_active=now() WHERE user_id=$1",[this.user.session.userId],function(err,result){
+		client.end();
+	});
 	
 	this.now.pong();
 }
 
 everyone.now.signup=function(username,password,email){
+	
+	// Conect to Postgres
+	var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
+	client.connect();
+	
+	
 	this.username=username.toLowerCase();
 	this.email=email.toLowerCase();
 	this.password=password;
 	
-	query("SELECT user_id FROM users WHERE name=$1",[username],function(err,result){
+	client.query("SELECT user_id FROM users WHERE name=$1",[username],function(err,result){
 		var rows=result.rows;
 		if (Object.keys(rows).length==0){
 			// They don't exist :D
-			query("INSERT INTO users (name, avatar_url, password, email) VALUES($1,'http://i.imgur.com/2KeOZ.png',$2,$3) RETURNING user_id",[this.username,md5(passHash.before+this.password+passHash.after),this.email],function(err,result){
+			client.query("INSERT INTO users (name, avatar_url, password, email) VALUES($1,'http://i.imgur.com/2KeOZ.png',$2,$3) RETURNING user_id",[this.username,md5(passHash.before+this.password+passHash.after),this.email],function(err,result){
 				this.user.session.userId=result.rows[0].user_id;
 				this.user.session.username=this.username;
 				this.user.session.avatar_url='http://i.imgur.com/2KeOZ.png';
@@ -646,13 +688,13 @@ everyone.now.signup=function(username,password,email){
 					email: this.email
 				}
 
-				
+				client.end();
 				this.now.loginResponse(true,userObject);
 				this.user.session.save();
 			}.bind(this));
 		}else{
 			// Username already exists :(
-			
+			client.end();
 			this.now.signupError(1);
 		}
 	}.bind(this));
