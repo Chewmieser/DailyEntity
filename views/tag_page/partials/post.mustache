@@ -8,7 +8,7 @@
 			<p class="pull-right" style="margin-right:10px;">
 				<i id="edit-{{post_id}}-icon" class="icon-pencil hidden" onClick="doEdit(0,{{post_id}})"></i>&nbsp;
 				<i id="reply-{{post_id}}-icon" class="icon-share-alt" onClick="doComment({{post_id}})"></i>&nbsp;
-				<i id="comments-{{post_id}}-icon" class="icon-comment icon-white" onClick="$('#comments-{{post_id}}-icon').toggleClass('icon-white');$('#comments-{{post_id}}').toggle(500);"></i><sup><sup id="comment-{{post_id}}-count">{{total_comments}}</sup></sup>
+				<i id="comments-{{post_id}}-icon" class="icon-comment" style="opacity: 0.5" onClick="if($('#comments-{{post_id}}-icon').css('opacity')=='0.5'){$('#comments-{{post_id}}-icon').css('opacity','1')}else{$('#comments-{{post_id}}-icon').css('opacity','0.5')}$('#comments-{{post_id}}').toggle(500);"></i><sup><sup id="comment-{{post_id}}-count">{{total_comments}}</sup></sup>
 			</p>&nbsp;
 		</blockquote>
 	</div>
