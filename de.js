@@ -66,17 +66,17 @@ global.client=[];
 var templates={};
 
 // Run a query from the pool
-function doQuery(query,arguments,callback){
-	if (typeof callback=='undefined'){
-		callback=arguments;
-		arguments=[];
+function doQuery(qu,arg,call){
+	var tmp={
+		qu: qu,
+		arg: arg,
+		call: call
 	}
 	
-	this.q=query, this.a=arguments, this.call=callback;
 	pg.connect(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity", function(err,c){
 		if (err!=null){console.log('Error connecting to postgres');console.log(err);}
-		c.query(q,a,call);
-	}.bind(this));
+		c.query(qu,arg,call);
+	}.bind(tmp));
 }
 
 // Handle debug messages
@@ -214,7 +214,8 @@ function loadTagPage(clientId){
 								
 								global.client[this.clientId].page_data.total_posts--;
 								if (global.client[this.clientId].page_data.total_posts==0){
-									
+									// Sort our object
+									global.client[this.clientId].page_data.posts.sort(function(a,b){return b.post_id-a.post_id});
 									sendTagPage(this.clientId);
 								}
 							}.bind(tmp));
@@ -222,7 +223,6 @@ function loadTagPage(clientId){
 					}
 				}else{
 					// No relevant posts, send the tag page
-					
 					sendTagPage(this.clientId);
 				}
 			}.bind(this)); // Pass context of 'this' into function
@@ -292,7 +292,6 @@ function sendTagPage(clientId){
 	if (global.client[clientId].page_data.posts.length==0){
 		buff="There doesn't seem to be anything here... Why not be the first to post something?";
 	}else{
-		// Iterate through the posts
 		for (i in global.client[clientId].page_data.posts){
 			var v={
 				post_id: global.client[clientId].page_data.posts[i].post_id,
