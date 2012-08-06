@@ -336,7 +336,7 @@ function sendTagPage(clientId){
 					// We've got attachments. Modify the post content.
 					var tmp="";
 					for (iii in global.client[clientId].page_data.posts[i].comments[ii].attachments){
-						tmp+='<li class="span2"><a href="'+global.client[clientId].page_data.posts[i].attachments[ii]+'" class="thumbnail" rel="lightbox"><img src="'+global.client[clientId].page_data.posts[i].comments[ii].attachments[iii]+'" style="max-height:100px;" /></a></li>';
+						tmp+='<li class="span2"><a href="'+global.client[clientId].page_data.posts[i].comments[ii].attachments[iii]+'" class="thumbnail" rel="lightbox"><img src="'+global.client[clientId].page_data.posts[i].comments[ii].attachments[iii]+'" style="max-height:100px;" /></a></li>';
 					}
 
 					iii++;
