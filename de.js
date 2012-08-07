@@ -139,7 +139,7 @@ function loadTagPage(clientId){
 			global.client[this.clientId].page_data.tag_data.description=rows[0].tag_description;
 
 			// Find relevant post IDs
-			doQuery("SELECT post_id FROM post_tags WHERE tag_id="+rows[0].tag_id+" ORDER BY post_id DESC",function(err,result){
+			doQuery("SELECT post_id FROM post_tags WHERE tag_id="+rows[0].tag_id+" ORDER BY post_id DESC LIMIT 20",function(err,result){
 				var rows=result.rows;
 				// If we have posts available, grab them
 				if (Object.keys(rows).length>0){
