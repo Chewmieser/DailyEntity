@@ -43,7 +43,7 @@ pg.defaults.poolSize=20;
 
 // Production session store !!!----!!!
 var hredis=require('connect-heroku-redis')(express);
-var sessionStore=new hredis;
+var sessionStore=new hredis({maxAge: 86400000*7});
 app.use(express.session({secret: "de123dezxc", store: sessionStore}));
 
 // Begin listening
@@ -315,7 +315,7 @@ function sendTagPage(clientId){
 
 				ii++
 
-				p.post_content+='<br><br><small>Attachments <sup><span class="badge" onClick="toggleThumb(this);">'+ii+'</span></sup></small><p><ul class="thumbnails" style="display: none;">';
+				p.post_content+='<br><br><small>Attachments <sup><span class="badge" onClick="toggleThumb(this);">'+ii+'</span></sup></small><p><ul class="thumbnails" style="'+((p.post_content.indexOf("nsfw")==-1)?('display: block;'):('display: none;'))+'">';
 				p.post_content+=tmp;
 				p.post_content+="</ul></p>";
 			}
@@ -341,7 +341,7 @@ function sendTagPage(clientId){
 
 					iii++;
 
-					pp.comment+='<br><br><small>Attachments <sup><span class="badge" onClick="toggleThumb(this);">'+iii+'</span></sup></small><p><ul class="thumbnails" style="display: none;">';
+					pp.comment+='<br><br><small>Attachments <sup><span class="badge" onClick="toggleThumb(this);">'+iii+'</span></sup></small><p><ul class="thumbnails" style="'+((pp.comment.indexOf("nsfw")==-1)?('display: block;'):('display: none;'))+'">';
 					pp.comment+=tmp;
 					pp.comment+="</ul></p>";
 				}
@@ -723,7 +723,7 @@ everyone.now.postMessage=function(content,tags,attachments){
 		
 		i++
 		
-		post.partials.post_content+='<br><br><small>Attachments <sup><span class="badge" onClick="toggleThumb(this);">'+i+'</span></sup></small><p><ul class="thumbnails" style="display: none;">';
+		post.partials.post_content+='<br><br><small>Attachments <sup><span class="badge" onClick="toggleThumb(this);">'+i+'</span></sup></small><p><ul class="thumbnails" style="'+((post.partials.post_content.indexOf("nsfw")==-1)?('display: block;'):('display: none;'))+'">';
 		post.partials.post_content+=tmp;
 		post.partials.post_content+="</ul></p>";
 	}
@@ -766,7 +766,7 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 		
 		i++;
 		
-		comment.partials.comment+='<br><br><small>Attachments <sup><span class="badge"onClick=" toggleThumb(this);">'+i+'</span></sup></small><p><ul class="thumbnails" style="display: none;">';
+		comment.partials.comment+='<br><br><small>Attachments <sup><span class="badge"onClick=" toggleThumb(this);">'+i+'</span></sup></small><p><ul class="thumbnails" style="'+((comment.partials.comment.indexOf("nsfw")==-1)?('display: block;'):('display: none;'))+'">';
 		comment.partials.comment+=tmp;
 		comment.partials.comment+="</ul></p>";
 	}
