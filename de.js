@@ -44,7 +44,7 @@ pg.defaults.poolSize=20;
 // Production session store !!!----!!!
 var hredis=require('connect-heroku-redis')(express);
 var sessionStore=new hredis({maxAge: 86400000*7});
-app.use(express.session({secret: "de123dezxc", store: sessionStore}));
+app.use(express.session({secret: "de123dezxc", store: sessionStore, cookie: {maxAge: 86400000*7}}));
 
 // Begin listening
 app.listen(process.env.PORT || 3000);
