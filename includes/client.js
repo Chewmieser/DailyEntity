@@ -5,7 +5,7 @@ now.ready(function(){
 		now.loadNavBar();
 	}
 	
-	$('#postbox').wysihtml5();
+	$('#postbox').wysihtml5({postButton:0});
 	setTimeout("ping()",5000);
 });
 
@@ -102,24 +102,27 @@ function doComment(post_id){
 	this.post_id=post_id;
 	$('#reply-'+post_id+'-icon').toggleClass('icon-share-alt').toggleClass('icon-remove').attr('onClick','removeCommentBox('+post_id+')');
 	$(commentEditSource).hide().prependTo('#comments-'+post_id).slideDown("slow",function(){
-		var $editor=$("#commentEditor").contents();
-		var $head=$editor.find("head");
-		var $body=$editor.find("body");
-		$body.css("background-color","#f5f5f5");
-		$head.append('<link href="../includes/bootstrap/css/bootstrap.css" rel="stylesheet">');
-		commentEditor.document.designMode='On';
+		$('#commentBox').wysihtml5({postButton:1,commentId:this.post_id});
 		
-		$("#sendCommentButton").attr("onClick","sendComment("+this.post_id+")");
+		//var $editor=$("#commentEditor").contents();
+		//var $head=$editor.find("head");
+		//var $body=$editor.find("body");
+		//$body.css("background-color","#f5f5f5");
+		//$head.append('<link href="../includes/bootstrap/css/bootstrap.css" rel="stylesheet">');
+		//commentEditor.document.designMode='On';
 		
-		monitor('commentEditor');
+		//$("#sendCommentButton").attr("onClick","sendComment("+this.post_id+")");
+		
+		//monitor('commentEditor');
 	}.bind(this));
 }
 
 function sendComment(post_id){
 	// Get comment body
-	var $editor=$("#commentEditor").contents();
-	var $body=$editor.find("body");
-	var bc=$body.html();
+	//var $editor=$("#commentEditor").contents();
+	//var $body=$editor.find("body");
+	//var bc=$body.html();
+	var bc=$('#commentBox').val();
 	
 	// Send the post their way
 	$('#sendCommentButton').addClass('active');

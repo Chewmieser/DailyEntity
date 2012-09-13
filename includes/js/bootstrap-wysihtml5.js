@@ -160,6 +160,7 @@
 
     var Wysihtml5 = function(el, options) {
         this.el = el;
+		options=$.extend(options,defaultOptions);
         this.toolbar = this.createToolbar(el, options || defaultOptions);
         this.editor =  this.createEditor(options);
 
@@ -246,7 +247,13 @@
                 self.toolbar.find('.current-color').text(el.html());
             });
 
-			toolbar.append("<a id='submitPostBt' class='btn btn-success btn-large pull-right' type='submit' onClick='doPost();'><i class='icon-comment icon-white'></i> Post</a>");
+			// Add post button
+			if (options.postButton==0){
+				toolbar.append("<a id='submitPostBt' class='btn btn-success btn-large pull-right' type='submit' onClick='doPost();'><i class='icon-comment icon-white'></i> Post</a>");
+			}else{
+				toolbar.append("<a id='sendCommentButton' class='btn btn-success btn-large pull-right' type='submit' onClick='sendComment("+options.commentId+");'><i class='icon-comment icon-white'></i> Comment</a>");
+			}
+			
             this.el.after(toolbar);
 
             return toolbar;
