@@ -62,13 +62,40 @@
                                "</div>" +
                                "<a class='btn' data-wysihtml5-command='insertImage' title='" + locale.image.insert + "'><i class='icon-picture'></i></a>" +
                            "</li>",
-
             "html":
                            "<li>" +
                                "<div class='btn-group'>" +
                                    "<a class='btn' data-wysihtml5-action='change_view' title='" + locale.html.edit + "'><i class='icon-pencil'></i></a>" +
                                "</div>" +
                            "</li>",
+			"smile":
+							"<li class='dropdown'>"+
+								"<a class='btn dropdown-toggle' data-toggle='dropdown' href='#'>"+
+									"<span class='smilies'><img src='/includes/smilies/icon_zoidberg.ico' /></span>&nbsp;<b class='caret'></b>" +
+								"</a>"+
+								"<ul class='dropdown-menu' style='width:230px;'>" +
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_ackbar.ico'><img src='/includes/smilies/icon_ackbar.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_at_at.ico'><img src='/includes/smilies/icon_at_at.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_barcode.ico'><img src='/includes/smilies/icon_barcode.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_beer.ico'><img src='/includes/smilies/icon_beer.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_bird.ico'><img src='/includes/smilies/icon_bird.ico' /></a><br>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_boobs.ico'><img src='/includes/smilies/icon_boobs.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_chocBar.ico'><img src='/includes/smilies/icon_chocBar.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_cigar.ico'><img src='/includes/smilies/icon_cigar.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_freeman.ico'><img src='/includes/smilies/icon_freeman.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_fruit.ico'><img src='/includes/smilies/icon_fruit.ico' /></a><br>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_hotdog.ico'><img src='/includes/smilies/icon_hotdog.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_iphone.ico'><img src='/includes/smilies/icon_iphone.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_katy.ico'><img src='/includes/smilies/icon_katy.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_popcorn.ico'><img src='/includes/smilies/icon_popcorn.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_star.ico'><img src='/includes/smilies/icon_star.ico' /></a><br>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_thumbs.ico'><img src='/includes/smilies/icon_thumbs.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_tp.ico'><img src='/includes/smilies/icon_tp.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_waffle.ico'><img src='/includes/smilies/icon_waffle.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_zoidberg.ico'><img src='/includes/smilies/icon_zoidberg.ico' /></a>"+
+									"<a style='display:inline;' data-wysihtml5-command='insertImage' data-wysihtml5-command-value='/includes/smilies/icon_bellsprout.ico'><img src='/includes/smilies/icon_bellsprout.ico' /></a>"+
+								"</ul>"+
+							"</li>",
 
             "color":       "<li class='dropdown'>" +
                                "<a class='btn dropdown-toggle' data-toggle='dropdown' href='#'>" +
@@ -94,12 +121,13 @@
 
     var defaultOptions = {
         "font-styles": true,
-        "color": false,
+        "color": true,
         "emphasis": true,
         "lists": true,
-        "html": false,
+        "html": true,
         "link": true,
         "image": true,
+		"smile": true,
         events: {},
         parserRules: {
             classes: {
@@ -258,7 +286,11 @@
 
             return toolbar;
         },
-
+		
+		initAddSmile: function(smile){
+			alert(smile);
+		},
+		
         initHtml: function(toolbar) {
             var changeViewSelector = "a[data-wysihtml5-action='change_view']";
             toolbar.find(changeViewSelector).click(function(e) {
