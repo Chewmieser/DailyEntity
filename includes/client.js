@@ -341,7 +341,7 @@ function doBold(button){
 
 // Initialize the editor
 function doStuff(){
-	//jQuery(function($) {
+	/*//jQuery(function($) {
 		var $editor=$("#editor").contents();
 		var $head=$editor.find("head");
 		var $body=$editor.find("body");
@@ -351,7 +351,7 @@ function doStuff(){
 	
 	// Start design mode
 	editor.document.designMode='On';
-	monitor('editor'); // Attach the spacebar hook
+	monitor('editor'); // Attach the spacebar hook*/
 }
 
 // Processes editor for hashtags
