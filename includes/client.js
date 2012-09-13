@@ -5,6 +5,7 @@ now.ready(function(){
 		now.loadNavBar();
 	}
 	
+	$('#postbox').wysihtml5();
 	setTimeout("ping()",5000);
 });
 
@@ -293,9 +294,11 @@ now.loginResponse=function(l,u){
 
 function doPost(){
 	// Get post body
-	var $editor=$("#editor").contents();
-	var $body=$editor.find("body");
-	var bc=$body.html();
+	//var $editor=$("#editor").contents();
+	//var $body=$editor.find("body");
+	//var bc=$body.html();
+	
+	var bc=$('#postbox').val();
 	
 	// Send the post their way
 	$('#submitPostBt').addClass('active');

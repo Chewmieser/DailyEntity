@@ -1,27 +1,8 @@
 <!-- Post Box -->
 <h2>What's up, buttercup?</h2>
-<iframe id="editor" class="well" style="width:99%;height:100px;padding:5px;"></iframe>
-<div style="margin-top:-20px;">
-	<div class="btn-toolbar" style="display:inline;">
-		<div class="btn-group">
-			<button class="btn"><i class="icon-upload"></i></button>
-			<button class="btn"><i class="icon-picture"></i></button>
-		</div>
-		<div class="btn-group" id="attach">
-		</div>
-		<div class="btn-group">
-			<button class="btn" onClick="doBold(this);"><i class="icon-bold"></i></button>
-			<button class="btn"><i class="icon-italic"></i></button>
-		</div>
-	</div>
-	
-	<button id="submitPostBt" class="btn btn-success btn-large pull-right" type="submit" onClick="doPost();">
-		<i class="icon-comment icon-white"></i> Post
-	</button>
-</div>
+<textarea id="postbox" class="well" style="width:99%;height:100px;padding:5px;"></textarea>
 
 <!-- Div -->
-<br><br>
 <h1 style="color:#666">#{{tag_name}}<small> {{tag_slogan}}</small></h1>
 <hr style="margin-top:-12px;">
 <br>
