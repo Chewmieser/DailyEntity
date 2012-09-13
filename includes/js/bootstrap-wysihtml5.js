@@ -17,9 +17,9 @@
                            "</li>",
             "emphasis":    "<li>" +
                                "<div class='btn-group'>" +
-                                   "<a class='btn' data-wysihtml5-command='bold' title='CTRL+B'>" + locale.emphasis.bold + "</a>" +
-                                   "<a class='btn' data-wysihtml5-command='italic' title='CTRL+I'>" + locale.emphasis.italic + "</a>" +
-                                   "<a class='btn' data-wysihtml5-command='underline' title='CTRL+U'>" + locale.emphasis.underline + "</a>" +
+                                   "<a class='btn' data-wysihtml5-command='bold' title='CTRL+B'>B</a>" +
+                                   "<a class='btn' data-wysihtml5-command='italic' title='CTRL+I'>I</a>" +
+                                   "<a class='btn' data-wysihtml5-command='underline' title='CTRL+U'>U</a>" +
                                "</div>" +
                            "</li>",
             "lists":       "<li>" +
