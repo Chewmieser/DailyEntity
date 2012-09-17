@@ -5,8 +5,16 @@ now.ready(function(){
 		now.loadNavBar();
 	}
 	
-	$('#postbox').wysihtml5({postButton:0});
 	setTimeout("ping()",5000);
+});
+
+$(document).ready(function(){
+	// Enable the post editor
+	$('#postbox').wysihtml5({
+		postButton: 0,
+	});
+	
+	//doStuff($('.wysihtml5-sandbox')[0]);
 });
 
 function ping(){
@@ -232,10 +240,10 @@ now.postResponse=function(id){
 	if (id==0){
 		$('#accountMenuDrop').addClass('open');
 	}else{
-		var $editor=$("#editor").contents();
-		var $body=$editor.find("body");
+		$('#postbox').data('wysihtml5').editor.fire("change_view", "textarea");
+		$('#postbox').val('');
+		$('#postbox').data('wysihtml5').editor.fire("change_view", "composer");
 		
-		$body.html('');
 		postTags=[tagPage];
 		postAttachments=[];
 	}
@@ -312,14 +320,14 @@ function doPost(){
 String.prototype.parseHashtag = function() {
 	return this.replace(/[#]+[A-Za-z0-9-_]+/g, function(t) {
 		addTag(t.replace("#",""));
-		return "<a href='/tag/"+t.replace("#","")+"' class='label'><i class='icon-tag icon-white'></i> "+t.replace("#","")+"</a>";
+		return "<a href='/tag/"+t.replace("#","")+"' class='label'><i class='icon-tag icon-white'></i> "+t.replace("#","")+" </a>";
 	});
 };
 
 // Mention parsing
 String.prototype.parseMention = function() {
 	return this.replace(/[@]+[A-Za-z0-9-_]+/g, function(t) {
-		return "<a href='/user/"+t.replace("@","")+"' class='label label-info'><i class='icon-user icon-white'></i> "+t.replace("@","")+"</a>";
+		return "<a href='/user/"+t.replace("@","")+"' class='label label-info'><i class='icon-user icon-white'></i> "+t.replace("@","")+" </a>";
 	});
 };
 
@@ -327,7 +335,7 @@ String.prototype.parseImage = function(){
 	return this.replace(/(https?:\/\/.*\.(?:png|jpg|gif))/i, function(t){
 		addAttachment(t);
 		//$('#attach').append("<div class='btn active'><img src='"+t+"' style='width:15px;height:15px;' /></div>");
-		return "<a href='#' class='label label-success'><i class='icon-picture icon-white'></i> Attachment</a>";
+		return "<a href='#' class='label label-success'><i class='icon-picture icon-white'></i> Attachment </a>";
 	});
 }
 
@@ -343,39 +351,56 @@ function doBold(button){
 }
 
 // Initialize the editor
-function doStuff(){
-	/*//jQuery(function($) {
-		var $editor=$("#editor").contents();
-		var $head=$editor.find("head");
-		var $body=$editor.find("body");
-		$body.css("background-color","#f5f5f5");
-		$head.append('<link href="../includes/bootstrap/css/bootstrap.css" rel="stylesheet">'); // Load bootstrap stylesheet
+function doStuff(editor){
+	//jQuery(function($) {
+		//var $editor=$(editor).contents();
+		//var $head=$editor.find("head");
+		//var $body=$editor.find("body");
+		//$body.css("background-color","#f5f5f5");
+		//$head.append('<link href="/includes/css/bootstrap.label.min.css" rel="stylesheet">'); // Load bootstrap stylesheet
 //	});
 	
 	// Start design mode
-	editor.document.designMode='On';
-	monitor('editor'); // Attach the spacebar hook*/
+	//monitor(editor); // Attach the spacebar hook
 }
 
 // Processes editor for hashtags
 function tagify(editor){
-		var $editor=$('#'+editor).contents();
-		var $body=$editor.find("body");
-		var bc=$body.html();
-		bc=bc.parseHashtag(); // Find tags
-		bc=bc.parseMention(); // Find mentions
-		bc=bc.parseImage();
+	$('#postbox').data('wysihtml5').editor.fire("change_view", "textarea");
+	var bc=$('#postbox').val();
+	bc=bc.parseHashtag(); // Find tags
+	bc=bc.parseMention(); // Find mentions
+	bc=bc.parseImage(); // Find attachments
+	$('#postbox').val(bc);
+	$('#postbox').data('wysihtml5').editor.fire("change_view", "composer");
+	
+	
+	
+	
+	
+	
+		//var $editor=$(editor).contents();
+		//var $body=$editor.find("body");
+		//var bc=$body.html();
+		//bc=bc.parseHashtag(); // Find tags
+		//bc=bc.parseMention(); // Find mentions
+		//bc=bc.parseImage();
 
 		// Insert tags
-		insertAtCursor(editor,'<img src="" id="caret" />', 0);
-		$body.html(bc);
-		resetCaret(editor);
+		
+		
+		
+		
+		//insertAtCursor(editor,'<img src="" id="caret" />', 0);
+		//$body.html(bc);
+		
+		//resetCaret(editor);
 }
 
 // Monitors the editor for a spacebar
 function monitor(editor){
 	this.editor=editor;
-	var f = document.getElementById(editor);
+	var f = editor;
 	var fwin = f.contentWindow || f.contentDocument;
 
 	var evt_key = function (e) {
@@ -391,18 +416,18 @@ function monitor(editor){
 function insertAtCursor(iframename, text, replaceContents) {
       if(replaceContents==null){replaceContents=false;}
       if(!replaceContents){//collapse selection:
-         var sel=document.getElementById(iframename).contentWindow.getSelection()
+         var sel=$(iframename).contentWindow.getSelection()
          sel.collapseToStart()
       }
-      document.getElementById(iframename).contentWindow.document.execCommand('insertHTML', false, text);
+      $(iframename).contentWindow.document.execCommand('insertHTML', false, text);
 };
 
 // Remove the tag after adding the hashtag and fix our insertion point
 function resetCaret(iframename){
-	var iframe=document.getElementById(iframename).contentWindow
+	var iframe=$(iframename).contentWindow
 	var referenceNode = iframe.document.getElementById("caret");
 	if (referenceNode){
-		var sel=document.getElementById(iframename).contentWindow.getSelection()
+		var sel=$(iframename).contentWindow.getSelection()
 
 		if(sel.focusNode){ // FireFox
 			var range=sel.getRangeAt(0);

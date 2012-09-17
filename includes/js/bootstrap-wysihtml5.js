@@ -182,13 +182,13 @@
                 "div": 1
             }
         },
-        stylesheets: ["/includes/css/wysiwyg-color.css"], // (path_to_project/lib/css/wysiwyg-color.css)
+        stylesheets: ["/includes/css/wysiwyg-color.css","/includes/css/bootstrap.label.min.css"], // (path_to_project/lib/css/wysiwyg-color.css)
         locale: "en"
     };
 
     var Wysihtml5 = function(el, options) {
         this.el = el;
-		options=$.extend(options,defaultOptions);
+		options=$.extend(defaultOptions,options);
         this.toolbar = this.createToolbar(el, options || defaultOptions);
         this.editor =  this.createEditor(options);
 
