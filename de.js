@@ -697,6 +697,12 @@ everyone.now.postMessage=function(content,tags,attachments){
 		return;
 	}
 	
+	// Parse everything....
+	var dat=parseMessage(content);
+	content=dat.content;
+	tags=tags.concat(dat.tags);
+	attachments=dat.attachments;
+	
 	var post={
 		view: {
 			post_id: 0,
@@ -741,6 +747,11 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 		this.now.commentResponse(0);
 		return;
 	}
+	
+	var dat=parseMessage(content);
+	content=dat.content;
+	tags=tags.concat(dat.tags);
+	attachments=dat.attachments;
 	
 	var comment={
 		view: {
@@ -793,3 +804,28 @@ app.get('*',function(req,res){
 		res.send(404);
 	}
 });
+
+function parseMessage(content){
+	var tags=[];
+	var attach=[];
+	
+	content=content.replace(/[#]+[A-Za-z0-9-_]+/g, function(t) {
+		tags.push(t.replace("#",""));
+		return "<a href='/tag/"+t.replace("#","")+"' class='label'><i class='icon-tag icon-white'></i> "+t.replace("#","")+"</a>";
+	});
+	
+	content=content.replace(/[@]+[A-Za-z0-9-_]+/g, function(t) {
+		return "<a href='/user/"+t.replace("@","")+"' class='label label-info'><i class='icon-user icon-white'></i> "+t.replace("@","")+"</a>";
+	});
+	
+	content=content.replace(/(https?:\/\/.*\.(?:png|jpg|gif))/i, function(t){
+		attach.push(t);
+		return "<a href='#' class='label label-success'><i class='icon-picture icon-white'></i> Attachment</a>";
+	});
+	
+	return {
+		content: content,
+		tags: tags,
+		attachments: attach
+	};
+}
