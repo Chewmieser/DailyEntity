@@ -492,9 +492,16 @@ function resolveTagsById(tags,callback){
 }
 
 function generatePopularTags(callback){
+	var tags=[];
+	doQuery("SELECT tags.tag_name,count(post_tags.post_tags_id) FROM tags INNER JOIN post_tags ON tags.tag_id=post_tags.tag_id GROUP BY tags.tag_name ORDER BY count DESC;",function(err,result){
+		for (i in result.rows){
+			tags.push(result.rows[i].tag_name);
+		}
+		
+		callback(tags);
+	});
 	
-
-	
+	/*
 	this.tags=[];
 	doQuery("SELECT post_tags.post_tags_id, tags.tag_name FROM tags INNER JOIN post_tags ON tags.tag_id = post_tags.tag_id;",function(err,result){
 		for (i in result.rows){
@@ -508,7 +515,7 @@ function generatePopularTags(callback){
 		this.tags.sort();
 		
 		callback(Object.keys(this.tags));
-	}.bind(this));
+	}.bind(this));*/
 }
 
 // Opening a tag page
