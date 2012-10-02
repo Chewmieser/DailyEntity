@@ -11,11 +11,80 @@ now.ready(function(){
 $(document).ready(function(){
 	// Enable the post editor
 	$('#postbox').wysihtml5({
-		postButton: 0,
+		postButton: 0
+	});
+	
+	$($('#postbox').data('wysihtml5').editor.composer.iframe).contents().keydown(function(e){
+		if (e.which==50){
+			// @ symbol
+			console.log("Mention");
+		}else if (e.which==51){
+			// # symbol
+			activateHashAutoComplete();
+		}else if (e.which==32){
+			deactivateHashAutoComplete();
+		}
 	});
 	
 	//doStuff($('.wysihtml5-sandbox')[0]);
 });
+
+function activateHashAutoComplete(){
+	$($('#postbox').data('wysihtml5').editor.composer.iframe).contents().keyup(function(e){
+		// Grab from hashtag till end
+		var content=$($('#postbox').data('wysihtml5').editor.composer.iframe).contents().find('body').get(0).innerHTML;
+		// Find hashtag
+		var hashIndex=content.lastIndexOf('#');
+		// Find end
+		var end=content.length;
+		// Current tag
+		var currTag=content.substr(hashIndex+1,end-hashIndex-1);
+		
+		if (currTag==""){return;}
+		autoComplete(currTag);
+	});
+}
+
+function autoComplete(tag){
+	$('#autocomplete').show();
+	var tag=tag;
+	var matches=jQuery.grep(knownTags,function(a){
+		if (a.indexOf(tag)!=-1){return true;}else{return false;}
+	});
+	
+	var tmp="";
+	for (i in matches){
+		//tmp+="<a class='label' onClick='acceptAutocomplete("+matches[i]+")'><i class='icon icon-white icon-tag'></i> "+matches[i]+"</a> ";
+		tmp+='<a class="label" onClick="acceptAutocomplete(\''+matches[i]+'\')"><i class="icon icon-white icon-tag"></i> '+matches[i]+'</a> ';
+	}
+	
+	document.getElementById('autocomplete').innerHTML=tmp;
+	//$('#autocomplete').show();
+	//document.getElementById('autocomplete').innerHTML=tags;
+}
+
+function acceptAutocomplete(tag){
+	console.log(tag);
+	
+	// Grab from hashtag till end
+	var content=$($('#postbox').data('wysihtml5').editor.composer.iframe).contents().find('body').get(0).innerHTML;
+	// Find hashtag
+	var hashIndex=content.lastIndexOf('#');
+	// Find end
+	var end=content.length;
+	// Current tag
+	var currTag=content.substr(hashIndex,end-hashIndex);
+	
+	content=content.replace(currTag,"#"+tag);
+	$($('#postbox').data('wysihtml5').editor.composer.iframe).contents().find('body').get(0).innerHTML=content;
+	
+	$('#postbox').data('wysihtml5').editor.composer.iframe.focus();
+	deactivateHashAutoComplete();
+}
+
+function deactivateHashAutoComplete(){
+	$($('#postbox').data('wysihtml5').editor.composer.iframe).contents().unbind('keyup');
+}
 
 function ping(){
 	now.ping();
@@ -202,6 +271,7 @@ now.pong=function(){
 
 now.doPopularTags=function(tags){
 	var tmp="";
+	knownTags=tags;
 	
 	for (i in tags){
 		tmp+="<a href='/tag/"+tags[i]+"' class='label'>"+tags[i]+"</a> ";

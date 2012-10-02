@@ -37,22 +37,22 @@ app.use(express.compress());
 pg.defaults.poolSize=20;
 
 // Development session store !!!----!!!
-//var MemoryStore=express.session.MemoryStore;
-//var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
-//app.use(express.session({secret: "de123dezxc", store: sessionStore}));
+var MemoryStore=express.session.MemoryStore;
+var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
+app.use(express.session({secret: "", store: sessionStore}));
 
 // Production session store !!!----!!!
-var hredis=require('connect-heroku-redis')(express);
-var sessionStore=new hredis({maxAge: 86400000*7});
-app.use(express.session({secret: "de123dezxc", store: sessionStore, cookie: {maxAge: 86400000*7}}));
+//var hredis=require('connect-heroku-redis')(express);
+//var sessionStore=new hredis({maxAge: 86400000*7});
+//app.use(express.session({secret: "", store: sessionStore, cookie: {maxAge: 86400000*7}}));
 
 // Begin listening
 app.listen(process.env.PORT || 3000);
 
 // Shake it like a salt shaker
 var passHash={
-	before: "de{crazy}",
-	after: "12deFunlol1z"
+	before: "",
+	after: ""
 }
 
 // Start now.js
@@ -112,8 +112,6 @@ function killClient(clientId){
 
 // Process a tag page request
 function loadTagPage(clientId){
-
-	
 	// Grab tag to load
 	var tag=global.client[clientId].page_data.params[0];
 	global.client[clientId].page_data.tag_data.name=tag;
@@ -362,9 +360,6 @@ function sendTagPage(clientId){
 }
 
 function postContent(user_id,content,tags,attachments,callback){
-	
-
-	
 	this.tags=tags;
 	this.attachments=attachments;
 	doQuery("INSERT INTO posts (post, user_id, timestamp) VALUES($1,$2,now()) RETURNING post_id",[content,user_id],function(err,result){
@@ -404,9 +399,6 @@ function postContent(user_id,content,tags,attachments,callback){
 }
 
 function postComment(user_id,post_id,content,tags,attachments,callback){
-	
-
-	
 	// Insert post
 	this.post_id=post_id;
 	this.tags=tags;
@@ -447,9 +439,6 @@ function postComment(user_id,post_id,content,tags,attachments,callback){
 }
 
 function resolveTags(tags,callback){
-	
-
-	
 	this.tags=tags;
 	this.resolved=[];
 	this.totalTags=tags.length;
@@ -470,9 +459,6 @@ function resolveTags(tags,callback){
 }
 
 function resolveTagsById(tags,callback){
-	
-
-	
 	this.tags=tags;
 	this.resolved=[];
 	this.totalTags=tags.length;
@@ -500,22 +486,6 @@ function generatePopularTags(callback){
 		
 		callback(tags);
 	});
-	
-	/*
-	this.tags=[];
-	doQuery("SELECT post_tags.post_tags_id, tags.tag_name FROM tags INNER JOIN post_tags ON tags.tag_id = post_tags.tag_id;",function(err,result){
-		for (i in result.rows){
-			if (this.tags[result.rows[i].tag_name]==undefined){
-				this.tags[result.rows[i].tag_name]=1;
-			}else{
-				this.tags[result.rows[i].tag_name]++;
-			}
-		}
-		
-		this.tags.sort();
-		
-		callback(Object.keys(this.tags));
-	}.bind(this));*/
 }
 
 // Opening a tag page
@@ -596,14 +566,8 @@ everyone.now.getPopularTags=function(){
 }
 
 everyone.now.login=function(username,password){
-	
-
-	
 	username=username.toLowerCase();
 	doQuery("SELECT * FROM users WHERE name=$1 AND password=$2",[username,md5(passHash.before+password+passHash.after)],function(err,result){
-		
-		
-		
 		var rows=result.rows;
 		
 		if (Object.keys(rows).length==0){
@@ -648,8 +612,6 @@ everyone.now.ping=function(){
 		return;
 	}
 	
-
-	
 	doQuery("UPDATE users SET last_active=now() WHERE user_id=$1",[this.user.session.userId],function(err,result){
 		
 	});
@@ -658,10 +620,6 @@ everyone.now.ping=function(){
 }
 
 everyone.now.signup=function(username,password,email){
-	
-
-	
-	
 	this.username=username.toLowerCase();
 	this.email=email.toLowerCase();
 	this.password=password;
@@ -794,6 +752,11 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 		this.postId=postId;
 		everyone.now.newComment(this.postId,mustache.to_html(this.template,this.view,this.partials));
 	}.bind(comment));
+}
+
+everyone.now.autocompleteTag=function(tag){
+	console.log(tag);
+	this.now.autocompleteTagResponse("bacon baconizer baconisgud");
 }
 
 app.get('/version',function(req,res){

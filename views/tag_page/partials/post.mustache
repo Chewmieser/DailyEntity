@@ -1,17 +1,18 @@
-<div class="row" style="margin-left:0px;" id="post-{{post_id}}">
-	<div class="span1" style="text-align:center;">
-		<img src="{{avatar_url}}" /> <span id="user-{{user_id}}"><small>{{user_name}}</small></span>
+<div class="row" style="margin:0px;" id="post-{{post_id}}">
+	<div class="span1" style="text-align:right;">
+		<img src="{{avatar_url}}" width="40" height="40"/><br />
+		<span id="user-{{user_id}}" style="font-size:8pt;">
+			{{user_name}}
+		</span>
 	</div>
-	<div class="span11">
-		<blockquote style="background-color:#f5f5f5;padding-top:10px;">
-			<p>{{>post_content}}</p>
-			<p class="pull-right" style="margin-right:10px;">
-				<i id="edit-{{post_id}}-icon" class="icon-pencil hidden" onClick="doEdit(0,{{post_id}})"></i>&nbsp;
-				<i id="reply-{{post_id}}-icon" class="icon-share-alt" onClick="doComment({{post_id}})"></i>&nbsp;
-				<i id="comments-{{post_id}}-icon" class="icon-comment" style="opacity: 0.5" onClick="if($('#comments-{{post_id}}-icon').css('opacity')=='0.5'){$('#comments-{{post_id}}-icon').css('opacity','1')}else{$('#comments-{{post_id}}-icon').css('opacity','0.5')}$('#comments-{{post_id}}').toggle(500);"></i><sup><sup id="comment-{{post_id}}-count">{{total_comments}}</sup></sup>
-			</p>&nbsp;
-		</blockquote>
-	</div>
+	<blockquote class="span11" style="background-color:#f5f5f5;padding-top:10px;">
+		<p>{{>post_content}}</p>
+		<p class="pull-right" style="margin-right:10px;">
+			<i id="edit-{{post_id}}-icon" class="icon-pencil hidden" onClick="doEdit(0,{{post_id}})"></i>&nbsp;
+			<i id="reply-{{post_id}}-icon" class="icon-share-alt" onClick="doComment({{post_id}})"></i>&nbsp;
+			<i id="comments-{{post_id}}-icon" class="icon-comment" style="opacity: 0.5" onClick="if($('#comments-{{post_id}}-icon').css('opacity')=='0.5'){$('#comments-{{post_id}}-icon').css('opacity','1')}else{$('#comments-{{post_id}}-icon').css('opacity','0.5')}$('#comments-{{post_id}}').toggle(500);"></i><sup><sup id="comment-{{post_id}}-count">{{total_comments}}</sup></sup>
+		</p>&nbsp;
+	</blockquote>
 </div>
 
 <div id="comments-{{post_id}}" style="display: none;">
