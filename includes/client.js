@@ -270,14 +270,31 @@ now.pong=function(){
 }
 
 now.doPopularTags=function(tags){
-	var tmp="";
+	var tmp="", tmp2="";
 	knownTags=tags;
 	
 	for (i in tags){
-		tmp+="<a href='/tag/"+tags[i]+"' class='label'>"+tags[i]+"</a> ";
+		// Too many tags?
+		if (i>24){
+			tmp2+="<a href='/tag/"+tags[i]+"' class='label'>"+tags[i]+"</a> ";
+		}else{
+			tmp+="<a href='/tag/"+tags[i]+"' class='label'>"+tags[i]+"</a> ";
+		}
+	}
+	
+	// Did we set a tmp2?
+	if (tmp2!=""){
+		// We did. Hide those!
+		tmp+="<a href='#' class='icon icon-plus-sign' id='morePopular' onClick='modPop()'></a><span id='morePop' style='display:none;'>"+tmp2+"</span><a href='#' class='icon icon-minus-sign' id='lessPopular' style='display:none;' onClick='modPop()'></a>";
 	}
 	
 	$('#popTagsContainer').html(tmp);
+}
+
+function modPop(){
+	$('#morePop').toggle();
+	$('#morePopular').toggle();
+	$('#lessPopular').toggle();
 }
 
 now.signupError=function(id){

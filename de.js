@@ -37,22 +37,22 @@ app.use(express.compress());
 pg.defaults.poolSize=20;
 
 // Development session store !!!----!!!
-var MemoryStore=express.session.MemoryStore;
-var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
-app.use(express.session({secret: "", store: sessionStore}));
+//var MemoryStore=express.session.MemoryStore;
+//var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
+//app.use(express.session({secret: "de123dezxc", store: sessionStore}));
 
 // Production session store !!!----!!!
-//var hredis=require('connect-heroku-redis')(express);
-//var sessionStore=new hredis({maxAge: 86400000*7});
-//app.use(express.session({secret: "", store: sessionStore, cookie: {maxAge: 86400000*7}}));
+var hredis=require('connect-heroku-redis')(express);
+var sessionStore=new hredis({maxAge: 86400000*7});
+app.use(express.session({secret: "de123dezxc", store: sessionStore, cookie: {maxAge: 86400000*7}}));
 
 // Begin listening
 app.listen(process.env.PORT || 3000);
 
 // Shake it like a salt shaker
 var passHash={
-	before: "",
-	after: ""
+	before: "de{crazy}",
+	after: "12deFunlol1z"
 }
 
 // Start now.js
