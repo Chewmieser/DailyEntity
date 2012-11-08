@@ -789,9 +789,19 @@ function parseMessage(content){
 	});
 	
 	content=content.replace(/(https?:\/\/.*\.(?:png|jpg|gif))/i, function(t){
+		var tt=t.split('">');
+		if (tt[0]==tt[1]){t=tt[0];}
 		attach.push(t);
 		return "<a href='#' class='label label-success'><i class='icon-picture icon-white'></i> Attachment</a>";
 	});
+	
+	// Fix auto-linking images (when using the image button)
+	content=content.replace('<img src="<a href=','<a href=');
+	content=content.replace('</i> Attachment</a>">','</i> Attachment</a>');
+	
+	// Fix auto-linking images (when link inserted into editor)
+	content=content.replace('<a href="<a href=','<a href=');
+	content=content.replace('></i> Attachment</a></a>','></i> Attachment</a>');
 	
 	return {
 		content: content,

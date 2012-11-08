@@ -313,12 +313,19 @@ now.returnActiveUsers=function(users){
 }
 
 now.loadNavBarTags=function(tags){
-	// Clear the navbar
-	$('#navLinkModify').html('');
+	// Save the modify before clearing
+	var modLink=$('#navLinkModify').clone();
+	$('#navlinks').html('');
 	
+	var tmp="";
 	for (i in tags){
-		$('#navLinkModify').before("<li><a href='/tag/"+tags[i]+"'>#"+tags[i]+"</a></li>");
+		tmp+="<li><a href='/tag/"+tags[i]+"'>#"+tags[i]+"</a></li>";
 	}
+	
+	$('#navlinks').html(tmp);
+	
+	// And add the mod link in again
+	$(modLink).appendTo('#navlinks');
 }
 
 now.tagSaveError=function(id){
