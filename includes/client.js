@@ -285,7 +285,7 @@ now.doPopularTags=function(tags){
 	// Did we set a tmp2?
 	if (tmp2!=""){
 		// We did. Hide those!
-		tmp+="<a href='#' class='icon icon-plus-sign' id='morePopular' onClick='modPop()'></a><span id='morePop' style='display:none;'>"+tmp2+"</span><a href='#' class='icon icon-minus-sign' id='lessPopular' style='display:none;' onClick='modPop()'></a>";
+		tmp+="<a href='#' class='icon icon-plus-sign' style='opacity:0.3;' id='morePopular' onClick='modPop()'></a><span id='morePop' style='display:none;'>"+tmp2+"</span><a href='#' class='icon icon-minus-sign' id='lessPopular' style='display:none;opacity:0.3;' onClick='modPop()'></a>";
 	}
 	
 	$('#popTagsContainer').html(tmp);
