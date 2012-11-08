@@ -14,7 +14,8 @@ $(document).ready(function(){
 		postButton: 0
 	});
 	
-	$($('#postbox').data('wysihtml5').editor.composer.iframe).contents().keydown(function(e){
+	// Disable "special feature"
+	/*$($('#postbox').data('wysihtml5').editor.composer.iframe).contents().keydown(function(e){
 		if (e.which==50){
 			// @ symbol
 			console.log("Mention");
@@ -24,7 +25,7 @@ $(document).ready(function(){
 		}else if (e.which==32){
 			deactivateHashAutoComplete();
 		}
-	});
+	});*/
 	
 	//doStuff($('.wysihtml5-sandbox')[0]);
 });
@@ -312,6 +313,9 @@ now.returnActiveUsers=function(users){
 }
 
 now.loadNavBarTags=function(tags){
+	// Clear the navbar
+	$('#navLinkModify').html('');
+	
 	for (i in tags){
 		$('#navLinkModify').before("<li><a href='/tag/"+tags[i]+"'>#"+tags[i]+"</a></li>");
 	}
