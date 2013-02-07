@@ -360,7 +360,7 @@ now.postResponse=function(id){
 
 now.notify=function(notification){
 	if ($('#noCount').html()==""){
-		$('#noCount').html("0");
+		$('#noCount').html("1");
 	}else{
 		$('#noCount').html(Number($('#noCount').html())+1);
 	}
