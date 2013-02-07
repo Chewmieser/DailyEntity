@@ -3,9 +3,11 @@ now.ready(function(){
 	now.requestActiveUsers();
 	if ($('#account_username').html()!='sign in'){
 		now.loadNavBar();
+		now.loadNotifications();
 	}
 	
 	setTimeout("ping()",5000);
+	setTimeout("checkInbox()",5000);
 });
 
 $(document).ready(function(){
@@ -90,6 +92,13 @@ function deactivateHashAutoComplete(){
 function ping(){
 	now.ping();
 	setTimeout("ping()",1000*60*5);
+}
+
+function checkInbox(){
+	$('#notifications').html('');
+	$('#noCount').html('');
+	now.loadNotifications();
+	setTimeout("checkInbox()",5000);
 }
 
 function modifyPermissionsIndicator(){
@@ -349,6 +358,19 @@ now.postResponse=function(id){
 	$('#submitPostBt').removeClass('active');
 }
 
+now.notify=function(notification){
+	if ($('#noCount').html()==""){
+		$('#noCount').html("0");
+	}else{
+		$('#noCount').html(Number($('#noCount').html())+1);
+	}
+	
+	// Build notification
+	var nono='<li><a href="#"><i class="icon-'+(notification.type==0?"align-justify":"comment")+'"></i>&nbsp;'+notification.username_from+'<i class="icon-remove pull-right" style="opacity:.25;"></i><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ccc;">'+notification.content+'</span></a></li>';
+	
+	$('#notifications').prepend(nono);
+}
+
 now.commentResponse=function(id,post_id){
 	if (id==0){
 		$('#accountMenuDrop').addClass('open');
@@ -398,6 +420,7 @@ now.loginResponse=function(l,u){
 		$('#account_menu').html("<li><a href='#' id='profileLink' onClick='showProfilePage();'>Profile</a></li><li class='divider'></li><li><a href='#' onClick='logout()'>Sign out</a></li>");
 		
 		now.loadNavBar();
+		now.loadNotifications();
 	}
 }
 

@@ -265,7 +265,7 @@ function sendTagPage(clientId){
 	
 	// Load the nav bar template
 	var v={
-		notification_count: 0,
+		notification_count: "",
 		user_name: "sign in"
 	}
 	
@@ -430,7 +430,7 @@ function postComment(user_id,post_id,content,tags,attachments,callback){
 							
 						}
 						
-						callback(this.post_id);
+						callback(this.post_id, this.comment_id);
 					}
 				}.bind(this));
 			}
@@ -499,6 +499,57 @@ app.get('/',function(req,res){
 	global.client[clientId].page_data.params[0]="news";
 	loadTagPage(clientId);
 });
+
+everyone.now.loadNotifications=function(){
+	if (this.user.session.userId==undefined){
+		return;
+	}
+	
+	// Build their notification list
+	doQuery("SELECT * FROM notifications WHERE user_to=$1 ORDER BY timestamp DESC",[this.user.session.userId],function(err,result){
+		if (Object.keys(result.rows).length>0){
+			// We've got notifications! Now handle them...
+			for (i in result.rows){
+				var theNotification={
+					type: result.rows[i].type,
+					id: result.rows[i].id,
+					content_id: result.rows[i].text,
+					timestamp: result.rows[i].timestamp
+				}
+				
+				var thisThat={
+					theNotification: theNotification,
+					now: this.now
+				}
+				
+				// Resolve username_from
+				doQuery("SELECT name FROM users WHERE user_id=$1",[result.rows[i].user_from],function(err,result){
+					this.theNotification.username_from=result.rows[0].name;
+					
+					if (this.theNotification.type==0){
+						// It's a post
+						doQuery("SELECT post FROM posts WHERE post_id=$1",[this.theNotification.content_id],function(err,result){
+							// Make a snippet of the content
+							this.theNotification.content=((result.rows[0].post).substr(0,25))+"...";
+							
+							// The notification has been built! Send it out!
+							this.now.notify(this.theNotification)
+						}.bind(this))
+					}else{
+						// It's a comment
+						doQuery("SELECT comment FROM comments WHERE comment_id=$1",[this.theNotification.content_id],function(err,result){
+							// Make a snippet of the content
+							this.theNotification.content=((result.rows[0].comment).substr(0,25))+"...";
+							
+							// The notification has been built! Send it out!
+							this.now.notify(this.theNotification)
+						}.bind(this))
+					}
+				}.bind(thisThat))
+			}
+		}
+	}.bind(this))
+}
 
 everyone.now.modifyProfile=function(avatar_url){
 	if (this.user.session.userId==undefined){
@@ -668,6 +719,9 @@ everyone.now.postMessage=function(content,tags,attachments){
 	tags=tags.concat(dat.tags);
 	attachments=dat.attachments;
 	
+	// Handle @mentions
+	var peopleFound=dat.peopleFound;
+	
 	var post={
 		view: {
 			post_id: 0,
@@ -703,6 +757,25 @@ everyone.now.postMessage=function(content,tags,attachments){
 	postContent(post.userId,content,tags,attachments,function(postId){
 		this.postId=postId;
 		this.view.post_id=postId;
+		
+		// Handle @mentions!
+		// Resolve @mention'd names
+		for (i in peopleFound){
+			doQuery("SELECT user_id FROM users WHERE name=$1",[peopleFound[i]],function(err,result){
+				var rows=result.rows;
+				if (Object.keys(rows).length!=0){
+					// Sha-zam! Correct @mention, BRO!
+					// Save all that Jazz, yo.
+					doQuery("INSERT INTO notifications (user_from, user_to, text, type, timestamp) VALUES($1, $2, $3, 0, now())",[post.userId, rows[0].user_id, postId], function(err,result){
+						if (err){
+							console.log("Final: INSERT INTO notifications (user_from, user_to, text, type, timestamp) VALUES("+post.userId+", "+rows[0].user_id+", '"+postId+"', 0, now())");
+							console.log(err);
+						}
+					});
+				}
+			})
+		}
+		
 		everyone.now.newPost(mustache.to_html(this.template,this.view,this.partials),this.tags);
 	}.bind(post));
 }
@@ -717,6 +790,9 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 	content=dat.content;
 	tags=tags.concat(dat.tags);
 	attachments=dat.attachments;
+	
+	// Handle @mentions
+	var peopleFound=dat.peopleFound;
 	
 	var comment={
 		view: {
@@ -748,8 +824,27 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 	}
 	
 	this.now.commentResponse(1,post_id);
-	postComment(comment.userId,post_id,content,tags,attachments,function(postId){
+	postComment(comment.userId,post_id,content,tags,attachments,function(postId, commentId){
 		this.postId=postId;
+		
+		// Handle @mentions!
+		// Resolve @mention'd names
+		for (i in peopleFound){
+			doQuery("SELECT user_id FROM users WHERE name=$1",[peopleFound[i]],function(err,result){
+				var rows=result.rows;
+				if (Object.keys(rows).length!=0){
+					// Sha-zam! Correct @mention, BRO!
+					// Save all that Jazz, yo.
+					doQuery("INSERT INTO notifications (user_from, user_to, text, type, timestamp) VALUES($1, $2, $3, 1, now())",[comment.userId, rows[0].user_id, commentId], function(err,result){
+						if (err){
+							console.log("Final: INSERT INTO notifications (user_from, user_to, text, type, timestamp) VALUES("+comment.userId+", "+rows[0].user_id+", '"+commentId+"', 0, now())");
+							console.log(err);
+						}
+					});
+				}
+			})
+		}
+		
 		everyone.now.newComment(this.postId,mustache.to_html(this.template,this.view,this.partials));
 	}.bind(comment));
 }
@@ -778,6 +873,7 @@ app.get('*',function(req,res){
 function parseMessage(content){
 	var tags=[];
 	var attach=[];
+	var peopleFound=[];
 	
 	content=content.replace(/[#]+[A-Za-z0-9-_]+/g, function(t) {
 		tags.push(t.replace("#",""));
@@ -785,6 +881,9 @@ function parseMessage(content){
 	});
 	
 	content=content.replace(/[@]+[A-Za-z0-9-_]+/g, function(t) {
+		// We MIGHT have a notification to send...
+		peopleFound.push(t.replace("@",""));
+		
 		return "<a href='/user/"+t.replace("@","")+"' class='label label-info'><i class='icon-user icon-white'></i> "+t.replace("@","")+"</a>";
 	});
 	
@@ -806,6 +905,7 @@ function parseMessage(content){
 	return {
 		content: content,
 		tags: tags,
-		attachments: attach
+		attachments: attach,
+		peopleFound: peopleFound
 	};
 }

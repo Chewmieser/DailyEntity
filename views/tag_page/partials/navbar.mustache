@@ -17,21 +17,21 @@
 				<!-- Notifications -->
 				<li class="dropdown">
 					<a href="#" class="dropdown-toggle" data-toggle="dropdown">
-						<i class="icon-envelope icon-white"></i> <sup>{{notification_count}}</sup>
+						<i class="icon-envelope icon-white"></i> <sup id="noCount">{{notification_count}}</sup>
 					</a>
 					<ul class="dropdown-menu">
-						{{>notifications}}
+						<div id="notifications">{{>notifications}}</div>
 						<li class="divider"></li>
 						<li>
 							<div class="row-fluid">
 								<div class="span2">
 									<a href="#" class=""><i class="icon-envelope"></i></a>
 								</div>
-								<div class="span3"></div>
-								<div class="span2">
+								<!--<div class="span3"></div>-->
+								<div class="span8">
 									<a href="#" onClick="setBrowserNotify();"><i id="notificationsIndicator" class="icon-globe"></i></a>
 								</div>
-								<div class="span3"></div>
+								<!--<div class="span3"></div>-->
 								<div class="span2">
 									<a href="#" class="pull-right"><i class="icon-trash"></i></a>
 								</div>
