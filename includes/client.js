@@ -275,6 +275,10 @@ function loginUser(){
 	now.login($('#loginUsername').val(),$('#loginPass').val());
 }
 
+function clearNotifications(){
+	now.clearNotifications();
+}
+
 now.pong=function(){
 	now.requestActiveUsers();
 }

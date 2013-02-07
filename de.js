@@ -500,6 +500,18 @@ app.get('/',function(req,res){
 	loadTagPage(clientId);
 });
 
+everyone.now.clearNotifications=function(){
+	if (this.user.session.userId==undefined){
+		return;
+	}
+	
+	doQuery("DELETE FROM notifications WHERE user_to=$1",[this.user.session.userId],function(err,result){
+		if (err){
+			console.log(err);
+		}
+	});
+}
+
 everyone.now.loadNotifications=function(){
 	if (this.user.session.userId==undefined){
 		return;
