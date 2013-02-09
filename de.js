@@ -526,12 +526,13 @@ everyone.now.loadNotifications=function(){
 					type: result.rows[i].type,
 					id: result.rows[i].id,
 					content_id: result.rows[i].text,
-					timestamp: result.rows[i].timestamp
+					timestamp: result.rows[i].timestamp,
 				}
 				
 				var thisThat={
 					theNotification: theNotification,
-					now: this.now
+					now: this.now,
+					user: this.user
 				}
 				
 				// Resolve username_from
@@ -541,8 +542,28 @@ everyone.now.loadNotifications=function(){
 					if (this.theNotification.type==0){
 						// It's a post
 						doQuery("SELECT post FROM posts WHERE post_id=$1",[this.theNotification.content_id],function(err,result){
+							// First, let's find where they're called out
+							var post=result.rows[0].post;
+							var userMatch=post.search(new RegExp("</i> "+this.user.session.username,"i"));
+							if (userMatch<0){
+								console.log("[ERROR] Looking for '</i> "+this.user.session.username+"'");
+								console.log("[-----] in "+post);
+								return;
+							}else{
+								// So now we have:
+								// @chewmieser</a> blah blah blah...
+								// We can figure out where </a> is and remove it, probably the best thing to do here
+								var startTotal=userMatch+5+(this.user.session.username).length+4;
+								
+								// Now we do an extract:
+								var theExtractedBits=(post.substr(startTotal,50));
+								if (post.substr(startTotal).length>50){
+									theExtractedBits+="...";
+								}
+							}
+							
 							// Make a snippet of the content
-							this.theNotification.content=((result.rows[0].post).substr(0,25))+"...";
+							this.theNotification.content=theExtractedBits;
 							
 							// The notification has been built! Send it out!
 							this.now.notify(this.theNotification)
@@ -550,8 +571,28 @@ everyone.now.loadNotifications=function(){
 					}else{
 						// It's a comment
 						doQuery("SELECT comment FROM comments WHERE comment_id=$1",[this.theNotification.content_id],function(err,result){
+							// First, let's find where they're called out
+							var post=result.rows[0].comment;
+							var userMatch=post.search(new RegExp("</i> "+this.user.session.username,"i"));
+							if (userMatch<0){
+								console.log("[ERROR] Looking for '</i> "+this.user.session.username+"'");
+								console.log("[-----] in "+post);
+								return;
+							}else{
+								// So now we have:
+								// @chewmieser</a> blah blah blah...
+								// We can figure out where </a> is and remove it, probably the best thing to do here
+								var startTotal=userMatch+5+(this.user.session.username).length+4;
+								
+								// Now we do an extract:
+								var theExtractedBits=(post.substr(startTotal,50));
+								if (post.substr(startTotal).length>50){
+									theExtractedBits+="...";
+								}
+							}
+							
 							// Make a snippet of the content
-							this.theNotification.content=((result.rows[0].comment).substr(0,25))+"...";
+							this.theNotification.content=theExtractedBits;
 							
 							// The notification has been built! Send it out!
 							this.now.notify(this.theNotification)
