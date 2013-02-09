@@ -36,15 +36,22 @@ app.use(express.compress());
 // PG Configuration Options
 pg.defaults.poolSize=20;
 
-// Development session store !!!----!!!
-//var MemoryStore=express.session.MemoryStore;
-//var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
-//app.use(express.session({secret: "de123dezxc", store: sessionStore}));
-
-// Production session store !!!----!!!
-var hredis=require('connect-heroku-redis')(express);
-var sessionStore=new hredis({maxAge: 86400000*7});
-app.use(express.session({secret: "de123dezxc", store: sessionStore, cookie: {maxAge: 86400000*7}}));
+// Which session-store are we using?
+if (process.env.PORT==undefined){
+	// Development session store !!!----!!!
+	var MemoryStore=express.session.MemoryStore;
+	var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
+	app.use(express.session({secret: "de123dezxc", store: sessionStore}));
+	
+	console.log("[INFO] Using production session store");
+}else{
+	// Production session store !!!----!!!
+	var hredis=require('connect-heroku-redis')(express);
+	var sessionStore=new hredis({maxAge: 86400000*7});
+	app.use(express.session({secret: "de123dezxc", store: sessionStore, cookie: {maxAge: 86400000*7}}));
+	
+	console.log("[INFO] Using development session store")
+}
 
 // Begin listening
 app.listen(process.env.PORT || 3000);
@@ -556,14 +563,21 @@ everyone.now.loadNotifications=function(){
 								var startTotal=userMatch+5+(this.user.session.username).length+4;
 								
 								// Now we do an extract:
-								var theExtractedBits=(post.substr(startTotal,50));
-								if (post.substr(startTotal).length>50){
-									theExtractedBits+="...";
+								var theExtractedBits=post.substr(startTotal);
+								
+								// Now strip the remaining HTML
+								theExtractedBits=theExtractedBits.replace(/<(?:.|\n)*?>/gm, '');
+								
+								// And then only copy 50 chars
+								var finalExtract=theExtractedBits.substr(0,50);
+								
+								if (theExtractedBits.substr(startTotal).length>50){
+									finalExtract+="...";
 								}
 							}
 							
 							// Make a snippet of the content
-							this.theNotification.content=theExtractedBits;
+							this.theNotification.content=finalExtract;
 							
 							// The notification has been built! Send it out!
 							this.now.notify(this.theNotification)
@@ -585,14 +599,21 @@ everyone.now.loadNotifications=function(){
 								var startTotal=userMatch+5+(this.user.session.username).length+4;
 								
 								// Now we do an extract:
-								var theExtractedBits=(post.substr(startTotal,50));
-								if (post.substr(startTotal).length>50){
-									theExtractedBits+="...";
+								var theExtractedBits=post.substr(startTotal);
+								
+								// Now strip the remaining HTML
+								theExtractedBits=theExtractedBits.replace(/<(?:.|\n)*?>/gm, '');
+								
+								// And then only copy 50 chars
+								var finalExtract=theExtractedBits.substr(0,50);
+								
+								if (theExtractedBits.substr(startTotal).length>50){
+									finalExtract+="...";
 								}
 							}
 							
 							// Make a snippet of the content
-							this.theNotification.content=theExtractedBits;
+							this.theNotification.content=finalExtract;
 							
 							// The notification has been built! Send it out!
 							this.now.notify(this.theNotification)
