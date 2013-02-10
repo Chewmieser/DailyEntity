@@ -3,12 +3,6 @@
 // Codename: Chocolate Chip Cheesecake
 // 7/2012
 
-// Profiling support
-/*require('nodetime').profile({
-	accountKey: '0b3cbcf57ce74ecfaf177a6e6253b583e104bc4d', 
-	appName: 'DailyEntity'
-});*/
-
 var versionNumber="1.0";
 var codeName="Chocolate Chip Cheesecake";
 
@@ -23,8 +17,6 @@ var md5=require("MD5");
 
 // Create server
 var app=express.createServer();
-//var client=new pg.Client(process.env.DATABASE_URL || "postgres://Steven@localhost/dailyentity");
-//client.connect();
 
 // app.configure options
 app.use(express.logger('tiny'));
@@ -43,14 +35,14 @@ if (process.env.PORT==undefined){
 	var sessionStore=new MemoryStore({reapInterval: 60000 * 10});
 	app.use(express.session({secret: "de123dezxc", store: sessionStore}));
 	
-	console.log("[INFO] Using production session store");
+	console.log("[INFO] Using development session store");
 }else{
 	// Production session store !!!----!!!
 	var hredis=require('connect-heroku-redis')(express);
 	var sessionStore=new hredis({maxAge: 86400000*7});
 	app.use(express.session({secret: "de123dezxc", store: sessionStore, cookie: {maxAge: 86400000*7}}));
 	
-	console.log("[INFO] Using development session store")
+	console.log("[INFO] Using production session store")
 }
 
 // Begin listening
@@ -546,79 +538,29 @@ everyone.now.loadNotifications=function(){
 				doQuery("SELECT name FROM users WHERE user_id=$1",[result.rows[i].user_from],function(err,result){
 					this.theNotification.username_from=result.rows[0].name;
 					
-					if (this.theNotification.type==0){
-						// It's a post
-						doQuery("SELECT post FROM posts WHERE post_id=$1",[this.theNotification.content_id],function(err,result){
-							// First, let's find where they're called out
-							var post=result.rows[0].post;
-							var userMatch=post.search(new RegExp("</i> "+this.user.session.username,"i"));
-							if (userMatch<0){
-								console.log("[ERROR] Looking for '</i> "+this.user.session.username+"'");
-								console.log("[-----] in "+post);
-								return;
-							}else{
-								// So now we have:
-								// @chewmieser</a> blah blah blah...
-								// We can figure out where </a> is and remove it, probably the best thing to do here
-								var startTotal=userMatch+5+(this.user.session.username).length+4;
-								
-								// Now we do an extract:
-								var theExtractedBits=post.substr(startTotal);
-								
-								// Now strip the remaining HTML
-								theExtractedBits=theExtractedBits.replace(/<(?:.|\n)*?>/gm, '');
-								
-								// And then only copy 50 chars
-								var finalExtract=theExtractedBits.substr(0,50);
-								
-								if (theExtractedBits.substr(startTotal).length>50){
-									finalExtract+="...";
-								}
-							}
+					doQuery((this.theNotification.type==0)?("SELECT post FROM posts WHERE post_id=$1"):("SELECT comment FROM comments WHERE comment_id=$1"),[this.theNotification.content_id],function(err,result){
+						// First, let's find where they're called out
+						var post=(this.theNotification.type==0)?result.rows[0].post:result.rows[0].comment;
+						var userMatch=post.search(new RegExp("</i> "+this.user.session.username,"i"));
+						if (userMatch>-1){
+							// So now we have:
+							// @chewmieser</a> blah blah blah...
+							// We can figure out where </a> is and remove it, probably the best thing to do here
+							var startTotal=userMatch+5+(this.user.session.username).length+4;
 							
-							// Make a snippet of the content
-							this.theNotification.content=finalExtract;
+							// Now we do an extract/clean/split:
+							var theExtractedBits=post.substr(startTotal);
+							theExtractedBits=theExtractedBits.replace(/<(?:.|\n)*?>/gm, '');
+							var finalExtract=theExtractedBits.substr(0,50);
 							
-							// The notification has been built! Send it out!
-							this.now.notify(this.theNotification)
-						}.bind(this))
-					}else{
-						// It's a comment
-						doQuery("SELECT comment FROM comments WHERE comment_id=$1",[this.theNotification.content_id],function(err,result){
-							// First, let's find where they're called out
-							var post=result.rows[0].comment;
-							var userMatch=post.search(new RegExp("</i> "+this.user.session.username,"i"));
-							if (userMatch<0){
-								console.log("[ERROR] Looking for '</i> "+this.user.session.username+"'");
-								console.log("[-----] in "+post);
-								return;
-							}else{
-								// So now we have:
-								// @chewmieser</a> blah blah blah...
-								// We can figure out where </a> is and remove it, probably the best thing to do here
-								var startTotal=userMatch+5+(this.user.session.username).length+4;
-								
-								// Now we do an extract:
-								var theExtractedBits=post.substr(startTotal);
-								
-								// Now strip the remaining HTML
-								theExtractedBits=theExtractedBits.replace(/<(?:.|\n)*?>/gm, '');
-								
-								// And then only copy 50 chars
-								var finalExtract=theExtractedBits.substr(0,50);
-								
-								if (theExtractedBits.substr(startTotal).length>50){
-									finalExtract+="...";
-								}
-							}
-							
-							// Make a snippet of the content
-							this.theNotification.content=finalExtract;
-							
-							// The notification has been built! Send it out!
-							this.now.notify(this.theNotification)
-						}.bind(this))
-					}
+							// Add ... if there's more to it
+							finalExtract+=theExtractedBits.length>50?"...":"";
+						}
+						
+						// Save and send the notification
+						this.theNotification.content=finalExtract;
+						this.now.notify(this.theNotification)
+					}.bind(this))
 				}.bind(thisThat))
 			}
 		}
@@ -632,25 +574,16 @@ everyone.now.modifyProfile=function(avatar_url){
 	
 	this.user.session.avatar_url=avatar_url;
 	this.user.session.save();
-	
-
-	doQuery("UPDATE users SET avatar_url=$1 WHERE user_id=$2",[avatar_url,this.user.session.userId],function(){
-		
-	});
+	doQuery("UPDATE users SET avatar_url=$1 WHERE user_id=$2",[avatar_url,this.user.session.userId],function(){});
 }
 
 everyone.now.loadNavBar=function(){
-	
-
-	
 	this.tags=[];
 	doQuery("SELECT * FROM navlinks WHERE user_id=$1",[this.user.session.userId],function(err,result){
 		if (Object.keys(result.rows).length>0){
 			for (i in result.rows){
 				this.tags.push(result.rows[i].tag_id);
 			}
-			
-			
 			
 			resolveTagsById(this.tags,function(ta){
 				this.now.loadNavBarTags(ta);
@@ -665,9 +598,7 @@ everyone.now.removeNavLink=function(tagName){
 	}
 	
 	resolveTags([tagName],function(tagIds){
-		doQuery("DELETE FROM navlinks WHERE tag_id=$1 AND user_id=$2",[tagIds[0],this.user.session.userId],function(err,result){
-			
-		});
+		doQuery("DELETE FROM navlinks WHERE tag_id=$1 AND user_id=$2",[tagIds[0],this.user.session.userId],function(err,result){});
 	}.bind(this));
 }
 
@@ -678,9 +609,7 @@ everyone.now.saveNavLink=function(tagName){
 	}
 	
 	resolveTags([tagName],function(tagIds){
-		doQuery("INSERT INTO navlinks (tag_id, user_id) VALUES($1,$2)",[tagIds[0],this.user.session.userId],function(err,result){
-			
-		});
+		doQuery("INSERT INTO navlinks (tag_id, user_id) VALUES($1,$2)",[tagIds[0],this.user.session.userId],function(err,result){});
 	}.bind(this));
 }
 
@@ -698,7 +627,8 @@ everyone.now.login=function(username,password){
 		if (Object.keys(rows).length==0){
 			this.now.loginResponse(false,{});
 		}else{
-			
+			// Really should adjust the query so it only takes what it needs...
+			// id name user_id avatar_url
 			delete rows[0].password;
 			
 			rows[0].id=rows[0].user_id;
@@ -712,13 +642,7 @@ everyone.now.login=function(username,password){
 }
 
 everyone.now.requestActiveUsers=function(){
-	
-
-	
 	doQuery("SELECT name FROM users WHERE age(now(),last_active) < INTERVAL '10 minutes'",function(err,result){
-		
-		
-		
 		if (Object.keys(result.rows).length>0){
 			var tmp=[];
 			for (i in result.rows){
@@ -765,13 +689,11 @@ everyone.now.signup=function(username,password,email){
 					email: this.email
 				}
 
-				
 				this.now.loginResponse(true,userObject);
 				this.user.session.save();
 			}.bind(this));
 		}else{
 			// Username already exists :(
-			
 			this.now.signupError(1);
 		}
 	}.bind(this));
@@ -957,7 +879,6 @@ function parseMessage(content){
 	content=content.replace(/[@]+[A-Za-z0-9-_]+/g, function(t) {
 		// We MIGHT have a notification to send...
 		peopleFound.push(t.replace("@",""));
-		
 		return "<a href='/user/"+t.replace("@","")+"' class='label label-info'><i class='icon-user icon-white'></i> "+t.replace("@","")+"</a>";
 	});
 	
