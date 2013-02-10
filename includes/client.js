@@ -362,17 +362,21 @@ now.postResponse=function(id){
 	$('#submitPostBt').removeClass('active');
 }
 
-now.notify=function(notification){
-	if ($('#noCount').html()==""){
-		$('#noCount').html("1");
-	}else{
-		$('#noCount').html(Number($('#noCount').html())+1);
+now.notify=function(notifications){
+	console.log(notifications)
+	// Okie, so we've got all our notifications in one sitting now. Pretty sweet. Iterate through the array we're receiving
+	for (i in notifications){
+		var notification=notifications[i];
+		
+		// Build the notifications
+		var nono='<li><a href="#"><i class="icon-'+(notification.type==0?"align-justify":"comment")+'"></i>&nbsp;'+notification.username_from+'<i class="icon-remove pull-right" style="opacity:.25;"></i><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ccc;">'+notification.content+'</span></a></li>';
+		
+		// Save the notification
+		$('#notifications').append(nono);
+		
+		// Increment our display
+		$('#noCount').html(($('#noCount').html()=="")?"1":Number($('#noCount').html())+1);
 	}
-	
-	// Build notification
-	var nono='<li><a href="#"><i class="icon-'+(notification.type==0?"align-justify":"comment")+'"></i>&nbsp;'+notification.username_from+'<i class="icon-remove pull-right" style="opacity:.25;"></i><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ccc;">'+notification.content+'</span></a></li>';
-	
-	$('#notifications').prepend(nono);
 }
 
 now.commentResponse=function(id,post_id){

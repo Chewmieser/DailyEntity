@@ -516,55 +516,50 @@ everyone.now.loadNotifications=function(){
 		return;
 	}
 	
-	// Build their notification list
-	doQuery("SELECT * FROM notifications WHERE user_to=$1 ORDER BY timestamp DESC",[this.user.session.userId],function(err,result){
-		if (Object.keys(result.rows).length>0){
-			// We've got notifications! Now handle them...
+	// All this craziness is gonna be replaced with:
+	doQuery("SELECT notifications.type, notifications.id, notifications.text, notifications.timestamp, users.name, public.findnodata(notifications.id) FROM notifications, users WHERE notifications.user_to=$1 AND users.user_id=notifications.user_from ORDER BY notifications.timestamp DESC",[this.user.session.userId],function(err,result){
+		// And voila! A bit of SQL magic... And a postgre function...
+		if (result.rows.length>0){
+			// We've got notifications, baby. Build a massive array of epic proportions or something
+			var theNotifications=[];
+			
 			for (i in result.rows){
+				// Copy our query result
+				var noOb=result.rows[i];
+				
+				// Create a new notification object
 				var theNotification={
-					type: result.rows[i].type,
-					id: result.rows[i].id,
-					content_id: result.rows[i].text,
-					timestamp: result.rows[i].timestamp,
+					type: noOb.type,
+					id: noOb.id,
+					content_id: noOb.text,
+					timestamp: noOb.timestamp,
+					username_from: noOb.name,
 				}
 				
-				var thisThat={
-					theNotification: theNotification,
-					now: this.now,
-					user: this.user
-				}
-				
-				// Resolve username_from
-				doQuery("SELECT name FROM users WHERE user_id=$1",[result.rows[i].user_from],function(err,result){
-					this.theNotification.username_from=result.rows[0].name;
+				// Extract the content to deliver
+				var post=noOb.findnodata;
+				var userMatch=post.search(new RegExp("</i> "+this.user.session.username,"i"));
+				if (userMatch>-1){
+					// So now we have:
+					// @chewmieser</a> blah blah blah...
+					// We can figure out where </a> is and remove it, probably the best thing to do here
+					var startTotal=userMatch+5+(this.user.session.username).length+4;
 					
-					doQuery((this.theNotification.type==0)?("SELECT post FROM posts WHERE post_id=$1"):("SELECT comment FROM comments WHERE comment_id=$1"),[this.theNotification.content_id],function(err,result){
-						// First, let's find where they're called out
-						var post=(this.theNotification.type==0)?result.rows[0].post:result.rows[0].comment;
-						var userMatch=post.search(new RegExp("</i> "+this.user.session.username,"i"));
-						if (userMatch>-1){
-							// So now we have:
-							// @chewmieser</a> blah blah blah...
-							// We can figure out where </a> is and remove it, probably the best thing to do here
-							var startTotal=userMatch+5+(this.user.session.username).length+4;
-							
-							// Now we do an extract/clean/split:
-							var theExtractedBits=post.substr(startTotal);
-							theExtractedBits=theExtractedBits.replace(/<(?:.|\n)*?>/gm, '');
-							var finalExtract=theExtractedBits.substr(0,50);
-							
-							// Add ... if there's more to it
-							finalExtract+=theExtractedBits.length>50?"...":"";
-						}
-						
-						// Save and send the notification
-						this.theNotification.content=finalExtract;
-						this.now.notify(this.theNotification)
-					}.bind(this))
-				}.bind(thisThat))
+					// Now we do an extract/clean/split/add ...
+					var theExtractedBits=post.substr(startTotal);
+					theExtractedBits=theExtractedBits.replace(/<(?:.|\n)*?>/gm, '');
+					var finalExtract=theExtractedBits.substr(0,50)+(theExtractedBits.length>50?"...":"");
+				}
+				
+				// Save and send it up to the (spirit in the sky) notification array
+				theNotification.content=finalExtract;
+				theNotifications.push(theNotification);
 			}
+			
+			// We've finished processing notifications at this point. Shoot them out
+			this.now.notify(theNotifications);
 		}
-	}.bind(this))
+	}.bind(this));
 }
 
 everyone.now.modifyProfile=function(avatar_url){
