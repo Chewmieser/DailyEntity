@@ -511,15 +511,17 @@ everyone.now.clearNotifications=function(){
 	});
 }
 
-everyone.now.loadNotifications=function(){
+everyone.now.loadNotifications=function(nId){
 	if (this.user.session.userId==undefined){
 		return;
 	}
 	
+	if (nId==undefined){nId=-1};
+	
 	// All this craziness is gonna be replaced with:
-	doQuery("SELECT notifications.type, notifications.id, notifications.text, notifications.timestamp, users.name, public.findnodata(notifications.id) FROM notifications, users WHERE notifications.user_to=$1 AND users.user_id=notifications.user_from ORDER BY notifications.timestamp DESC",[this.user.session.userId],function(err,result){
+	doQuery("SELECT notifications.type, notifications.id, notifications.text, notifications.timestamp, users.name, public.findnodata(notifications.id) FROM notifications, users WHERE notifications.user_to=$1 AND users.user_id=notifications.user_from AND notifications.id > $2 ORDER BY notifications.timestamp ASC",[this.user.session.userId,nId],function(err,result){
 		// And voila! A bit of SQL magic... And a postgre function...
-		if (result.rows.length>0){
+		if (result!=undefined && result.rows.length>0){
 			// We've got notifications, baby. Build a massive array of epic proportions or something
 			var theNotifications=[];
 			
@@ -558,6 +560,9 @@ everyone.now.loadNotifications=function(){
 			
 			// We've finished processing notifications at this point. Shoot them out
 			this.now.notify(theNotifications);
+		}else{
+			// Well... We've got nothing. Report this anyways
+			this.now.notify();
 		}
 	}.bind(this));
 }

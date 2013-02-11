@@ -7,7 +7,6 @@ now.ready(function(){
 	}
 	
 	setTimeout("ping()",5000);
-	setTimeout("checkInbox()",5000);
 });
 
 $(document).ready(function(){
@@ -92,13 +91,6 @@ function deactivateHashAutoComplete(){
 function ping(){
 	now.ping();
 	setTimeout("ping()",1000*60*5);
-}
-
-function checkInbox(){
-	$('#notifications').html('');
-	$('#noCount').html('');
-	now.loadNotifications();
-	setTimeout("checkInbox()",5000);
 }
 
 function modifyPermissionsIndicator(){
@@ -363,20 +355,26 @@ now.postResponse=function(id){
 }
 
 now.notify=function(notifications){
-	console.log(notifications)
 	// Okie, so we've got all our notifications in one sitting now. Pretty sweet. Iterate through the array we're receiving
 	for (i in notifications){
 		var notification=notifications[i];
-		
+	
+		if (i==notifications.length-1){
+			// Save our timestamp
+			lastNotification=notification.id;
+		}
+	
 		// Build the notifications
 		var nono='<li><a href="#"><i class="icon-'+(notification.type==0?"align-justify":"comment")+'"></i>&nbsp;'+notification.username_from+'<i class="icon-remove pull-right" style="opacity:.25;"></i><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ccc;">'+notification.content+'</span></a></li>';
-		
+	
 		// Save the notification
-		$('#notifications').append(nono);
-		
+		$('#notifications').prepend(nono);
+	
 		// Increment our display
 		$('#noCount').html(($('#noCount').html()=="")?"1":Number($('#noCount').html())+1);
 	}
+	
+	setTimeout("now.loadNotifications('"+lastNotification+"')",5000);
 }
 
 now.commentResponse=function(id,post_id){
