@@ -269,6 +269,9 @@ function loginUser(){
 
 function clearNotifications(){
 	now.clearNotifications();
+	
+	$('#noCount').html('');
+	$('#notifications').html('');
 }
 
 now.pong=function(){
