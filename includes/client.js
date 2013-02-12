@@ -358,6 +358,14 @@ now.postResponse=function(id){
 }
 
 now.notify=function(notifications){
+	// Do we need to inform the user?
+	if (notifications!=undefined && notifications.length>0 && lastNotification!=0){
+		// Hot-damn do it up
+		if (window.webkitNotifications.checkPermission()==0){
+			window.webkitNotifications.createNotification('/favicon.ico','New notification','Someone mentioned you. Check it out!').show();
+		}
+	}
+	
 	// Okie, so we've got all our notifications in one sitting now. Pretty sweet. Iterate through the array we're receiving
 	for (i in notifications){
 		var notification=notifications[i];
@@ -368,7 +376,7 @@ now.notify=function(notifications){
 		}
 	
 		// Build the notifications
-		var nono='<li><a href="#"><i class="icon-'+(notification.type==0?"align-justify":"comment")+'"></i>&nbsp;'+notification.username_from+'<i class="icon-remove pull-right" style="opacity:.25;"></i><br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ccc;">'+notification.content+'</span></a></li>';
+		var nono='<li id="notification-'+notification.id+'"><a href="#" onClick="readNotification('+notification.content_id+','+notification.type+','+notification.id+')"><i class="icon-'+(notification.type==0?"align-justify":"comment")+'"></i>&nbsp;'+notification.username_from+'<br>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#ccc;">'+notification.content+'</span></a><i class="icon-remove pull-right" onClick="didReadNotification('+notification.id+')" style="opacity:.25;position:relative;top:-37px;left:-5px;"></i></li>';
 	
 		// Save the notification
 		$('#notifications').prepend(nono);
@@ -378,6 +386,39 @@ now.notify=function(notifications){
 	}
 	
 	setTimeout("now.loadNotifications('"+lastNotification+"')",5000);
+}
+
+function readNotification(content_id,type,noId){
+	if (type==0 && $('#post-'+content_id).is('*')){
+		$('html, body').animate({
+			scrollTop: ($("#post-"+content_id).offset().top)-50
+		}, 1000);
+		
+		didReadNotification(noId);
+	}else if (type==1 && $('#comment-'+content_id).is('*')){
+		// Show our daddy
+		var parent=$('#comment-'+content_id).parent();
+		var postId=parent.attr('id').split('-')[1];
+		parent.show();
+		
+		// Scroll it
+		$('html, body').animate({
+			scrollTop: ($("#comment-"+content_id).offset().top)-50
+		}, 1000);
+		
+		didReadNotification(noId);
+	}
+}
+
+function didReadNotification(noId){
+	// Tell the system
+	now.deleteNotification(noId);
+	
+	// Remove our copy
+	$('#notification-'+noId).remove();
+	
+	// Update our count
+	$('#noCount').html(($('#noCount').html()=="1")?"":Number($('#noCount').html())-1);
 }
 
 now.commentResponse=function(id,post_id){
@@ -395,20 +436,22 @@ now.newPost=function(post,tags){
 		$(post).hide().prependTo('#postContainer').slideDown("slow");
 		
 		$('a.thumbnail').slimbox();
-	}
-	
-	if (window.webkitNotifications.checkPermission()==0){
-		window.webkitNotifications.createNotification('/favicon.ico','New post','Someone posted something new... Check it out.').show();
+		
+		if (window.webkitNotifications.checkPermission()==0){
+			window.webkitNotifications.createNotification('/favicon.ico','New post','Someone posted something new... Check it out.').show();
+		}
 	}
 }
 
 now.newComment=function(post_id,comment){
-	$(comment).hide().prependTo('#comments-'+post_id).slideDown("slow");
-	var val=$('#comment-'+post_id+'-count').html();
-	val++;
-	$('#comment-'+post_id+'-count').html(val);
-	
-	$('a.thumbnail').slimbox();
+	if ($('#comments-'+post_id).is('*')){
+		$(comment).hide().prependTo('#comments-'+post_id).slideDown("slow");
+		var val=$('#comment-'+post_id+'-count').html();
+		val++;
+		$('#comment-'+post_id+'-count').html(val);
+
+		$('a.thumbnail').slimbox();
+	}
 }
 
 now.loginResponse=function(l,u){

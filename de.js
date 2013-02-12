@@ -511,6 +511,14 @@ everyone.now.clearNotifications=function(){
 	});
 }
 
+everyone.now.deleteNotification=function(noId){
+	if (this.user.session.userId==undefined){
+		return;
+	}
+	
+	doQuery("DELETE FROM notifications WHERE id=$1",[noId],function(err,result){});
+}
+
 everyone.now.loadNotifications=function(nId){
 	if (this.user.session.userId==undefined){
 		return;
@@ -823,6 +831,8 @@ everyone.now.postComment=function(post_id,content,tags,attachments){
 	postComment(comment.userId,post_id,content,tags,attachments,function(postId, commentId){
 		this.postId=postId;
 		
+		this.view.comment_id=comment_id;
+		
 		// Handle @mentions!
 		// Resolve @mention'd names
 		for (i in peopleFound){
@@ -867,21 +877,24 @@ app.get('*',function(req,res){
 });
 
 function parseMessage(content){
-	var tags=[];
-	var attach=[];
-	var peopleFound=[];
+	var tags=[]; // Save found tags
+	var attach=[]; // Save found attachments
+	var peopleFound=[]; // Save found mentions
 	
+	// Find tags
 	content=content.replace(/[#]+[A-Za-z0-9-_]+/g, function(t) {
 		tags.push(t.replace("#",""));
 		return "<a href='/tag/"+t.replace("#","")+"' class='label'><i class='icon-tag icon-white'></i> "+t.replace("#","")+"</a>";
 	});
 	
+	// Find mentions
 	content=content.replace(/[@]+[A-Za-z0-9-_]+/g, function(t) {
 		// We MIGHT have a notification to send...
 		peopleFound.push(t.replace("@",""));
 		return "<a href='/user/"+t.replace("@","")+"' class='label label-info'><i class='icon-user icon-white'></i> "+t.replace("@","")+"</a>";
 	});
 	
+	// Find attachments
 	content=content.replace(/(https?:\/\/.*\.(?:png|jpg|gif))/i, function(t){
 		var tt=t.split('">');
 		if (tt[0]==tt[1]){t=tt[0];}
