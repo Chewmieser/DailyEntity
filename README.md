@@ -10,6 +10,8 @@ The "Solution"
 
 When we were finally pushed into finding a new hosting service for DailyEntity, my goal was to re-make the site in Node.JS and be able to operate on a single Heroku Dyno. During a week, I developed the first iteration of DE and we moved. While this code was utilized to learn Node.JS, the platform is incredibly stable and has been running consistantly for over a year.
 
+The front-end is completely realtime thanks to Now.JS (which was a mistake when I should have just used Socket.io). The backend uses Express for routing.
+
 The Quirks
 ---
 
